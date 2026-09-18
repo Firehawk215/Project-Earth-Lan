@@ -785,7 +785,7 @@ function Invoke-ToolsModsGames {
 
     $btnScan.add_Click({
         if ($rbGames.Checked) {
-            if ($txtPass.Text -ne "1337") {
+            if ($txtPass.Text -ne ) {
                 [System.Windows.Forms.MessageBox]::Show("Falsches Passwort! Zugriff verweigert.", "Passwortschutz", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error)
                 &$logCallback "ZUGRIFF VERWEIGERT: Falsches Passwort für Kategorie Games."
                 return
