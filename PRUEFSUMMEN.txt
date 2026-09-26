@@ -1,0 +1,18 @@
+﻿================================================================================
+ PROJECT EARTH LAN MANAGER 2026.09.23 (Deutsch) - SHA-256-PRUEFSUMMEN
+ erstellt am 26.09.2026 03:59
+================================================================================
+
+So pruefst du eine Datei (PowerShell im selben Ordner):
+    Get-FileHash ".\<Dateiname>" -Algorithm SHA256
+Der ausgegebene Wert muss mit dem hier passenden uebereinstimmen.
+
+Project Earth Lan Manager.exe
+    Groesse : 1.217.024 Bytes
+    SHA-256 : DA29B9B1DBEEFF5C9F5351F2EB5095AA8C78A6A5E94FA36C8BD13298F55A3210
+
+Project Earth Lan Manager.ps1
+    Groesse : 812.257 Bytes
+    SHA-256 : E6967E711454077D4A754F62C0C96FCE7390D654265E24DD3C90789716CEF0B0
+
+================================================================================
