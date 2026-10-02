@@ -122,3 +122,14 @@ Ein eigenes Intranet direkt aus dem Manager – **ohne Webserver-Software**.
 
 Der komplette Quellcode ist in **PowerShell** geschrieben und hier auf GitHub **öffentlich einsehbar**.
 Jeder kann nachlesen, was der Manager tut.
+
+### 🧪 Prüfwerkzeug
+
+Mit `Pruefwerkzeug.ps1` kann jeder die Skripte und die fertige `.exe` selbst prüfen – ohne Code-Kenntnisse.
+
+- **Prüfbericht für `.ps1`** – Syntax, SHA256, Signatur, Kodierung und in Klartext mit Zeilennummern: Netzwerk, Ports, Internet-Adressen, Firewall, Registry, Autostart, Start anderer Programme, Löschbefehle
+- **Prüfbericht für `.exe`** – SHA256, Abgleich mit der `.sha256.txt`, Signatur, Versionsangaben
+- **Sandbox-Datei** – bindet den Ordner schreibgeschützt in die Windows-Sandbox ein
+- **Alles entfernen** – zeigt Ordner, Firewall-Regeln und geplante Aufgaben der Tools und entfernt nur das Angehakte
+
+> ℹ️ Die geprüften Dateien werden nur gelesen und nie ausgeführt. Der Bericht ist eine statische Prüfung und ersetzt keinen Virenscanner.
