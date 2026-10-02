@@ -43,7 +43,7 @@ if ($script:IsCompiledExe) {
 # signierte Freigabe loest es aus, der Nutzer bekommt vorher ein Hinweisfenster, geladen
 # wird ausschliesslich das GitHub-Release, und die Datei muss zum signierten SHA256
 # passen (siehe Region "Globales Update").
-$script:PelVersion = "2026.10.03"
+$script:PelVersion = "2026.10.04"
 $script:PelGitHubUrl = "https://github.com/Firehawk215/Project-Earth-Lan"
 $script:PelGitHubApiLatest = "https://api.github.com/repos/Firehawk215/Project-Earth-Lan/releases/latest"
 $script:PelGitHubApiTags = "https://api.github.com/repos/Firehawk215/Project-Earth-Lan/tags"
@@ -5178,6 +5178,8 @@ WIE FINDEN SICH DIE PCS? (Vermittlungsserver)
   Der Vermittlungsserver läuft entweder
     - bei einem Spieler (Option 9 "Eigene Lobby hosten") oder
     - dauerhaft auf einem Server (Programm PEL-Rendezvous).
+  Läuft PEL-Rendezvous schon auf demselben PC, startet der Manager keinen
+  zweiten Server, sondern tritt der Lobby über den laufenden bei.
 
 WAS IST EINE LOBBY?
   Eine Lobby ist ein eigenes, abgeschlossenes Netz: Lobby-Name + Passwort.
@@ -6345,6 +6347,8 @@ HOW DO THE PCS FIND EACH OTHER? (relay server)
   The relay server runs either
     - at one of the players (option 9 "Host your own lobby") or
     - permanently on a server (program PEL-Rendezvous).
+  If PEL-Rendezvous already runs on the same PC, the manager does not
+  start a second server, it joins the lobby through the running one.
 
 WHAT IS A LOBBY?
   A lobby is its own closed network: lobby name + password. Only those
@@ -10042,6 +10046,56 @@ function Save-PelErrorRecords {
             Write-PelLog -Level 'FEHLER' -Message $txt
         }
     } catch { }
+}
+
+# BUGFIX 04.10.2026: Timer des Control Centers zentral anhalten.
+# Die Timer rufen Funktionen auf, die nur INNERHALB von Show-MainDashboard existieren
+# (Update-DashboardP2p, Update-DashboardHost, Update-DashboardStatus ...). Endete das
+# Dashboard auf einem anderen Weg als über FormClosing (z. B. durch einen Fehler), liefen
+# die Timer weiter, solange noch ein Meldungsfenster offen war: jede Sekunde drei Zeilen
+# "... wurde nicht als Name eines Cmdlet erkannt" im Protokoll, der Live-Status stand, und
+# die Ports (P2P, Vermittlungsserver, Postfach) blieben belegt. Jetzt merkt sich das
+# Dashboard seine Timer hier, und sie werden auf JEDEM Ausgang angehalten.
+$script:PelDashTimers = New-Object System.Collections.ArrayList
+function Stop-PelDashboardTimers {
+    foreach ($t in @($script:PelDashTimers)) { try { $t.Stop() } catch { } }
+}
+# Nach einem Absturz des Control Centers: Timer anhalten und Netzwerkdienste beenden,
+# BEVOR die Fehlermeldung gezeigt wird (sie haelt den Prozess offen, bis man OK klickt).
+function Stop-PelDashboardAfterCrash {
+    Stop-PelDashboardTimers
+    try { Stop-PelP2p } catch { }
+    try { Stop-PelHostServer } catch { }
+    try { Stop-PelFileServer } catch { }
+    try { Stop-PelMailService } catch { }
+}
+# $true, solange die Funktionen des Dashboards erreichbar sind. Sonst haelt der Aufrufer
+# (ein Timer) alle Dashboard-Timer an, statt jede Sekunde einen Fehler zu protokollieren.
+function Test-PelDashboardAlive {
+    if (Test-Path -LiteralPath 'function:Update-DashboardStatus') { return $true }
+    Stop-PelDashboardTimers
+    if (-not $script:PelDashDeadLogged) {
+        $script:PelDashDeadLogged = $true
+        Write-PelLog -Level 'FEHLER' -Message 'Control Center: Dashboard ist beendet, Timer liefen noch - angehalten.'
+    }
+    return $false
+}
+
+# Prüft, ob ein UDP-Port auf diesem PC schon belegt ist (z. B. 47810 durch das
+# eigenständige PEL-Rendezvous). Öffnet den Port nur kurz zur Probe und gibt ihn wieder frei.
+function Test-PelUdpPortBusy([int]$Port) {
+    $probe = $null
+    try {
+        $probe = New-Object System.Net.Sockets.UdpClient($Port)
+        return $false
+    } catch {
+        # New-Object verpackt den Fehler - die eigentliche Ursache steckt in InnerException
+        $ex = $_.Exception
+        while ($ex.InnerException) { $ex = $ex.InnerException }
+        return ($ex -is [System.Net.Sockets.SocketException])
+    } finally {
+        if ($probe) { try { $probe.Close() } catch { } }
+    }
 }
 
 function Start-PelErrorLogging([string]$Context) {
@@ -31574,6 +31628,14 @@ using System.Runtime.InteropServices;
 public static class PelWin
 {
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+    [DllImport("user32.dll")] public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint flags);
+    // BUGFIX 04.10.2026: ShowWindow(SW_HIDE) schickt dem Fenster WM_SHOWWINDOW. WinForms
+    // setzt daraufhin "Visible = false", und ein per ShowDialog laufendes Fenster beendet
+    // dann seine Schleife - Control Center bzw. Option schlossen sich beim Verstecken im
+    // Infobereich komplett (P2P, Live-Status und Postfach waren weg). SetWindowPos mit
+    // SWP_HIDEWINDOW versteckt das Fenster, OHNE diese Nachricht zu schicken.
+    // Flags: SWP_NOSIZE 1 | SWP_NOMOVE 2 | SWP_NOZORDER 4 | SWP_NOACTIVATE 0x10 | SWP_HIDEWINDOW 0x80
+    public static bool HideKeepState(IntPtr hWnd) { return SetWindowPos(hWnd, IntPtr.Zero, 0, 0, 0, 0, 0x0097); }
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
     [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr hWnd);
     public const int SW_HIDE = 0;
@@ -31659,7 +31721,7 @@ $script:PelOptTray = $null
 function Hide-PelOptionWindow($Form) {
     $s = $script:PelOptTray
     if (-not $s -or -not $Form -or $Form.IsDisposed) { return }
-    try { [void][PelWin]::ShowWindow($Form.Handle, [PelWin]::SW_HIDE) } catch { return }
+    try { [void][PelWin]::HideKeepState($Form.Handle) } catch { return }
     if (-not $s.Hidden.Contains($Form)) { $s.Hidden.Add($Form) }
     try { [void]$s.InTray.Set() } catch { }
     # Kein Control Center da: ausnahmsweise ein eigenes Symbol, sonst fände man das
@@ -39768,6 +39830,8 @@ function Show-PelQuickMessageDialog {
 # ZENTRALES HAUPTMENÜ DASHBOARD
 # ------------------------------------------------------------------------------
 function Show-MainDashboard {
+    $script:PelDashTimers.Clear()
+    $script:PelDashDeadLogged = $false
     $mainForm = (New-PelForm)
     $mainForm.Text = "Project Earth LAN - Control Center"
     $mainForm.Size = New-Object System.Drawing.Size(520, 1264)
@@ -40408,6 +40472,27 @@ function Show-MainDashboard {
         $s.DynSecretEnc = Protect-PelP2pPassword $DynSecret
         $s.HostAuto = $Auto
         Save-PelP2pSettings $s
+        # BUGFIX 04.10.2026: Läuft auf diesem PC schon ein Vermittlungsserver (eigenständiges
+        # PEL-Rendezvous auf demselben UDP-Port), scheiterte "Lobby hosten" bisher mit
+        # "Port belegt" - und beim Programmstart wurde danach auch der gemerkten Lobby nicht
+        # mehr beigetreten: Der Manager blieb ohne P2P-Netz und fand keine anderen Manager.
+        # Jetzt wird kein zweiter Server gestartet, sondern der Lobby über den bereits
+        # laufenden Server auf diesem PC beigetreten (127.0.0.1).
+        if (-not $script:PelHostState.Running -and (Test-PelUdpPortBusy ([int]$script:PelHostPort))) {
+            Write-PelLog -Level 'HOST' -Message "UDP-Port $($script:PelHostPort) ist auf diesem PC schon belegt (PEL-Rendezvous läuft?) - kein zweiter Vermittlungsserver, Beitritt über den laufenden Server."
+            if (-not $Silent) {
+                $busyMsg = Get-PelText "Auf diesem PC läuft bereits ein Vermittlungsserver (PEL-Rendezvous) auf UDP-Port $($script:PelHostPort).`n`nDer Manager startet keinen zweiten, sondern tritt der Lobby über den laufenden Server bei." "A relay server (PEL-Rendezvous) is already running on this PC on UDP port $($script:PelHostPort).`n`nThe manager does not start a second one, it joins the lobby through the running server."
+                Show-PelMsg $busyMsg 'Lobby hosten' ([System.Windows.Forms.MessageBoxIcon]::Information) $mainForm
+            }
+            if (Test-PelP2pRunning) { Stop-PelP2p }
+            $txtP2pServer.Text = "127.0.0.1:$($script:PelHostPort)"
+            $txtP2pLobby.Text = $Lobby.Trim()
+            $txtP2pPass.Text = $Password
+            $p2pUi.OwnLobby = $false
+            if ($Silent) { Invoke-DashboardP2pJoin -Silent -NoSave } else { Invoke-DashboardP2pJoin -NoSave }
+            Update-DashboardHost
+            return
+        }
         $mainForm.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
         try {
             Start-PelHostServer -Lobby $Lobby.Trim() -Password $Password -DynProvider $DynProvider -DynName $DynName.Trim() -DynSecret $DynSecret
@@ -40923,21 +41008,25 @@ function Show-MainDashboard {
         $pingState.Busy = $false
     })
     $pingPoll.Start()
+    [void]$script:PelDashTimers.Add($pingPoll)
 
     $statusTimer = New-Object System.Windows.Forms.Timer
     $statusTimer.Interval = 8000
-    $statusTimer.Add_Tick({ Update-DashboardStatus; Start-DashboardFriendPing })
+    $statusTimer.Add_Tick({ if (-not (Test-PelDashboardAlive)) { return }; Update-DashboardStatus; Start-DashboardFriendPing })
     $statusTimer.Start()
+    [void]$script:PelDashTimers.Add($statusTimer)
 
     # P2P-Status (1 s): Log übernehmen, virtuelle IP einrichten, Mitspielerliste
     $p2pTimer = New-Object System.Windows.Forms.Timer
     $p2pTimer.Interval = 1000
     $p2pTimer.Add_Tick({
+        if (-not (Test-PelDashboardAlive)) { return }
         try { Update-DashboardP2p } catch { Write-PelLog -Level 'P2P' -Message ("GUI: " + $_.Exception.Message) }
         try { Update-DashboardHost } catch { Write-PelLog -Level 'HOST' -Message ("GUI: " + $_.Exception.Message) }
         try { Update-DashboardFileServer } catch { Write-PelLog -Level 'FILES' -Message ("GUI: " + $_.Exception.Message) }
     })
     $p2pTimer.Start()
+    [void]$script:PelDashTimers.Add($p2pTimer)
     $mainForm.Add_Shown({
         # Autostart Datei-Server (Option 1)
         try {
@@ -41923,6 +42012,7 @@ function Show-MainDashboard {
     $statPoll = New-Object System.Windows.Forms.Timer
     $statPoll.Interval = 500
     $statPoll.Add_Tick({
+        if (-not (Test-PelDashboardAlive)) { return }
         # Gesamter Tick abgesichert: ein unerwarteter Fehler darf den Live-Status nicht
         # anhalten (er landet trotzdem im Fehlerprotokoll, siehe Save-PelErrorRecords).
         try {
@@ -42198,6 +42288,7 @@ function Show-MainDashboard {
         } catch { }
     })
     $statPoll.Start()
+    [void]$script:PelDashTimers.Add($statPoll)
 
     $mainForm.Add_FormClosing({
         param($sender, $e)
@@ -42338,7 +42429,7 @@ function Show-MainDashboard {
         $mainForm.TopMost = $true; $mainForm.TopMost = $false
     }
     function Hide-PelCcWindow {
-        try { [void][PelWin]::ShowWindow($mainForm.Handle, [PelWin]::SW_HIDE) } catch { return }
+        try { [void][PelWin]::HideKeepState($mainForm.Handle) } catch { return }
         $tray.Hidden = $true
         if (-not $tray.Hinted -and -not $script:PelAutostartMode) {
             $tray.Hinted = $true
@@ -42428,6 +42519,7 @@ function Show-MainDashboard {
         } catch { }
     })
     $trayTimer.Start()
+    [void]$script:PelDashTimers.Add($trayTimer)
 
     $mainForm.Add_Resize({
         if ($mainForm.WindowState -eq [System.Windows.Forms.FormWindowState]::Minimized -and (Get-PelTrayMinimize) -and -not $tray.Hidden) { Hide-PelCcWindow }
@@ -42466,7 +42558,7 @@ function Show-MainDashboard {
         $mainForm.Add_Shown({ $welcomeTimer.Start() })
     }
 
-    [void]$mainForm.ShowDialog()
+    try { [void]$mainForm.ShowDialog() } finally { Stop-PelDashboardTimers }
     if ($script:PelRestartRequested) { Start-PelDelayedRestart }
 }
 
@@ -42501,6 +42593,7 @@ if ($Option) {
             default { Show-MainDashboard }
         }
     } catch {
+        Stop-PelDashboardTimers
         $errText = ($Error | Select-Object -First 6 | Out-String)
         Write-PelLog -Level 'ABSTURZ' -Message ("Option ${Option}: " + ($errText -replace '\s+', ' '))
         [PelI18n]::Show("Option $Option konnte nicht gestartet werden:`n`n$errText", "Project Earth LAN - Fehler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
@@ -42528,6 +42621,7 @@ if ($Option) {
     try {
         Show-MainDashboard
     } catch {
+        Stop-PelDashboardAfterCrash
         $errText = ($Error | Select-Object -First 6 | Out-String)
         Write-PelLog -Level 'ABSTURZ' -Message ("Control Center: " + ($errText -replace '\s+', ' '))
         [PelI18n]::Show("Das Control Center wurde wegen eines Fehlers beendet:`n`n$errText`n`nÜber 'Fehlerlog exportieren' (nach dem Neustart) kannst du die Details weitergeben.", "Project Earth LAN - Fehler", [System.Windows.Forms.MessageBoxButtons]::OK, [System.Windows.Forms.MessageBoxIcon]::Error) | Out-Null
