@@ -1,0 +1,43 @@
+# Haengt die Manager-.exe und ihre .sha256.txt aus dem Hauptverzeichnis an ein Release an.
+# Start nur von Hand (Actions -> "Release-Dateien anhaengen" -> Run workflow), nie automatisch.
+# Vor dem Hochladen wird geprueft, dass die .exe zum SHA256 in der .sha256.txt passt.
+# Es wird nichts gebaut und nichts veraendert - die Dateien werden 1:1 aus dem Repository genommen.
+name: Release-Dateien anhaengen
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release-Tag, an den die Dateien angehaengt werden'
+        required: true
+        default: 'Gaming'
+
+permissions:
+  contents: write
+
+jobs:
+  anhaengen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: SHA256 pruefen und Dateien anhaengen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          found=0
+          for exe in "Project Earth Lan Manager "*.exe; do
+            txt="$exe.sha256.txt"
+            if [ ! -f "$txt" ]; then echo "Fehlt: $txt"; exit 1; fi
+            want=$(grep -oiE '[0-9a-f]{64}' "$txt" | head -n 1 | tr 'A-F' 'a-f')
+            have=$(sha256sum "$exe" | cut -d' ' -f1)
+            echo "$exe"
+            echo "  erwartet: $want"
+            echo "  berechnet: $have"
+            if [ "$want" != "$have" ]; then echo "SHA256 passt nicht - Abbruch."; exit 1; fi
+            gh release upload "$TAG" "$exe" "$txt" --clobber --repo "$GITHUB_REPOSITORY"
+            found=1
+          done
+          if [ "$found" -ne 1 ]; then echo "Keine Manager-.exe im Hauptverzeichnis gefunden."; exit 1; fi
