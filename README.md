@@ -35,6 +35,8 @@ Der Manager will nichts Etabliertes ersetzen, sondern alle abholen, die einfach 
 **Bedienung:**
 - Optionaler Autostart – der Manager startet direkt im Infobereich (neben der Uhr)
 - Ein einziges Symbol für alle Fenster, mit Menü aller offenen Fenster
+- Minimierte Fenster bleiben in der Taskleiste sichtbar (Verstecken im Infobereich ist einschaltbar)
+- Sicherheitsabfrage beim Beenden – schützt vor versehentlichem Schließen
 
 ---
 
