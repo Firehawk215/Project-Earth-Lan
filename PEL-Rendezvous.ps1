@@ -1,5 +1,6 @@
 ﻿# ==============================================================================
 # Project Earth LAN - Vermittlungsserver (Signaling / Rendezvous + Relay)
+# Version: 2026.10.05
 # ==============================================================================
 # Minimaler UDP-Server fuer das native P2P-Netzwerk des LAN Managers.
 #   - vermittelt die oeffentlichen + lokalen Adressen aller Lobby-Mitglieder
@@ -15,6 +16,11 @@
 #   Windows:  powershell -ExecutionPolicy Bypass -File .\PEL-Rendezvous.ps1 [-Port 47810]
 #   Linux:    pwsh ./PEL-Rendezvous.ps1 [-Port 47810]        (PowerShell 7)
 # Voraussetzung: UDP-Port (Standard 47810) in Firewall/Router eingehend freigeben.
+# Im Fenster-Modus (Windows) legt der Server die Windows-Firewall-Regel ab Version
+# 2026.10.05 selbst an, wenn sie fehlt (ohne Administratorrechte fragt Windows einmal
+# nach; beim stillen Autostart wird nicht gefragt, sondern nur im Protokoll gewarnt).
+# Der Regelname ist derselbe wie im LAN Manager ("Project Earth LAN Vermittlungsserver
+# (UDP <Port>)") - es entsteht keine doppelte Regel.
 # Beenden: Strg+C
 #
 # Läuft der Server zu Hause (wechselnde öffentliche IP), kann er seinen DynDNS-Namen
@@ -657,14 +663,15 @@ if ($rvUseGui) {
 # Linux würde sonst schon beim Einlesen an den Windows-Grafiktypen scheitern (auch mit -NoGui).
 $rvGuiCode = @'
     [System.Windows.Forms.Application]::EnableVisualStyles()
-    # Konsolenfenster minimieren - alles Wichtige steht jetzt im Fenster
+    # Konsolenfenster ausblenden (nicht nur minimieren) - alles Wichtige steht im Fenster.
+    # Hausregel: Ein Tool mit Oberfläche zeigt kein leeres Konsolenfenster.
     try {
         if (-not ('PelRvWin' -as [type])) {
             Add-Type -Namespace '' -Name 'PelRvWin' -MemberDefinition ('[System.Runtime.InteropServices.DllImport("kernel32.dll")] public static extern System.IntPtr GetConsoleWindow();' +
                 "`n" + '[System.Runtime.InteropServices.DllImport("user32.dll")] public static extern bool ShowWindow(System.IntPtr h, int n);')
         }
         $cw = [PelRvWin]::GetConsoleWindow()
-        if ($cw -ne [IntPtr]::Zero) { [void][PelRvWin]::ShowWindow($cw, $(if ($Autostart) { 0 } else { 6 })) }
+        if ($cw -ne [IntPtr]::Zero) { [void][PelRvWin]::ShowWindow($cw, 0) }
     } catch { }
 
     # ---------------- Einstellungen (Passwörter/Token per DPAPI, nur dieser Windows-Benutzer) -----
@@ -843,7 +850,7 @@ $rvGuiCode = @'
         Srv = $srv; Port = $Port; P2pPort = 47800
         PublicIp = ''; LanIp = ''; Results = @{}; LastCheck = [DateTime]::MinValue; NextCheck = [DateTime]::Now
         Job = $null; ForceNext = $true; LastUpdateOk = @{ Duck = [DateTime]::MinValue; Other = [DateTime]::MinValue }
-        UpnpOk = $false; UpnpTried = $false; UpnpIp = ''; UpnpError = ''; UpnpPorts = @(); Cgnat = $false; FirewallOk = $null
+        UpnpOk = $false; UpnpTried = $false; UpnpIp = ''; UpnpError = ''; UpnpPorts = @(); Cgnat = $false; FirewallOk = $null; FwAutoTried = $false
         IpChanged = ''; DynWorkText = $dynWork.ToString(); ManualMsg = $false
     }
 
@@ -870,6 +877,35 @@ $rvGuiCode = @'
         $rv.Job = [pscustomobject]@{ PS = $ps; Rs = $rs; Handle = $ps.BeginInvoke() }
         $rv.ForceNext = $false
         Update-RvView
+    }
+
+    # Legt die eingehende Windows-Firewall-Regel für den Server-Port an (gleicher Name wie
+    # im LAN Manager). Als Administrator direkt; sonst - nur wenn $Prompt gesetzt ist - über
+    # einen versteckt gestarteten, erhöhten PowerShell-Prozess (Windows fragt einmal nach).
+    # Rückgabe: $true = Regel vorhanden/angelegt. Fehler landen als Text in $script:RvFwError.
+    function Enable-RvFirewall([bool]$Prompt) {
+        $script:RvFwError = ''
+        $port = [int]$script:Rv.Port
+        $rn = "Project Earth LAN Vermittlungsserver (UDP $port)"
+        $isAdmin = $false
+        try { $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator) } catch { }
+        try {
+            if ($isAdmin) {
+                if (-not (Get-NetFirewallRule -DisplayName $rn -ErrorAction SilentlyContinue)) {
+                    New-NetFirewallRule -DisplayName $rn -Direction Inbound -Action Allow -Protocol UDP -LocalPort $port -Profile Any -ErrorAction Stop | Out-Null
+                }
+                return $true
+            }
+            if (-not $Prompt) { $script:RvFwError = 'keine Administratorrechte'; return $false }
+            $cmd = "if (-not (Get-NetFirewallRule -DisplayName '$rn' -ErrorAction SilentlyContinue)) { New-NetFirewallRule -DisplayName '$rn' -Direction Inbound -Action Allow -Protocol UDP -LocalPort $port -Profile Any | Out-Null }"
+            $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+            $p = Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-WindowStyle', 'Hidden', '-Command', $cmd) -Verb RunAs -WindowStyle Hidden -PassThru -Wait
+            if ($p.ExitCode -ne 0) { throw "Befehl endete mit Code $($p.ExitCode)" }
+            return $true
+        } catch {
+            $script:RvFwError = $_.Exception.Message
+            return $false
+        }
     }
 
     function Receive-RvCheck {
@@ -910,6 +946,18 @@ $rvGuiCode = @'
             }
             $rv.Cgnat = [bool]($rv.UpnpIp -and ((-not (Test-RvPublicIPv4 $rv.UpnpIp)) -or ($rv.PublicIp -and $rv.UpnpIp -ne $rv.PublicIp)))
             if ($null -ne $res.FirewallOk) { $rv.FirewallOk = [bool]$res.FirewallOk }
+            # Fehlt die Firewall-Regel, einmal pro Lauf selbst anlegen (wie der LAN Manager
+            # beim Start). Beim stillen Autostart ohne Administratorrechte wird nicht
+            # nachgefragt - dann bleibt die Warnung im Fenster und der Knopf stehen.
+            if ($rv.FirewallOk -eq $false -and -not $rv.FwAutoTried) {
+                $rv.FwAutoTried = $true
+                if (Enable-RvFirewall (-not $Autostart)) {
+                    $rv.FirewallOk = $true
+                    Add-RvLog "Firewall-Regel für UDP $($rv.Port) automatisch angelegt."
+                } else {
+                    Add-RvLog "Firewall-Regel für UDP $($rv.Port) fehlt und wurde nicht angelegt ($($script:RvFwError)) - bitte 'Firewall freigeben' klicken."
+                }
+            }
         }
         # Wie Option 10: Mitglieder, die sich über LAN/Loopback anmelden (z. B. der eigene Manager),
         # werden anderen mit der öffentlichen IP angekündigt -> direkte Verbindung statt Relay.
@@ -1146,19 +1194,11 @@ $rvGuiCode = @'
     $bIpNow.Add_Click({ $script:Rv.ManualMsg = $true; Show-RvFlash 'wird geprüft ...'; Start-RvCheck $true })
     $bFw.Add_Click({
         $port = $script:Rv.Port
-        $rn = "Project Earth LAN Vermittlungsserver (UDP $port)"
-        $cmd = "if (-not (Get-NetFirewallRule -DisplayName '$rn' -ErrorAction SilentlyContinue)) { New-NetFirewallRule -DisplayName '$rn' -Direction Inbound -Action Allow -Protocol UDP -LocalPort $port -Profile Any | Out-Null }"
-        $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        try {
-            if ($isAdmin) { Invoke-Expression $cmd }
-            else {
-                $exe = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-                $p = Start-Process -FilePath $exe -ArgumentList @('-NoProfile', '-Command', $cmd) -Verb RunAs -WindowStyle Hidden -PassThru -Wait
-                if ($p.ExitCode -ne 0) { throw "Befehl endete mit Code $($p.ExitCode)" }
-            }
+        if (Enable-RvFirewall $true) {
+            $script:Rv.FirewallOk = $true
             Add-RvLog "Firewall-Regel für UDP $port angelegt."
             Show-RvFlash 'Firewall-Regel angelegt.'
-        } catch { Show-RvFlash "Firewall-Regel nicht angelegt: $($_.Exception.Message)" $true }
+        } else { Show-RvFlash "Firewall-Regel nicht angelegt: $($script:RvFwError)" $true }
         Start-RvCheck $false
     })
     $bNewPw.Add_Click({

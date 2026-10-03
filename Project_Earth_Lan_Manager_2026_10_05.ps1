@@ -43,7 +43,7 @@ if ($script:IsCompiledExe) {
 # signierte Freigabe loest es aus, der Nutzer bekommt vorher ein Hinweisfenster, geladen
 # wird ausschliesslich das GitHub-Release, und die Datei muss zum signierten SHA256
 # passen (siehe Region "Globales Update").
-$script:PelVersion = "2026.10.04"
+$script:PelVersion = "2026.10.05"
 $script:PelGitHubUrl = "https://github.com/Firehawk215/Project-Earth-Lan"
 $script:PelGitHubApiLatest = "https://api.github.com/repos/Firehawk215/Project-Earth-Lan/releases/latest"
 $script:PelGitHubApiTags = "https://api.github.com/repos/Firehawk215/Project-Earth-Lan/tags"
@@ -1329,6 +1329,8 @@ Jetzt testen	Test now
 Eigene IP: -	Own IP: -
 Adapter wechseln	Change adapter
 Fehlerlog exportieren	Export error log
+Alle Ports freigeben	Open all ports
+Legt alle Windows-Firewall-Regeln an, die der Manager braucht (passiert auch bei jedem Start).	Creates all Windows Firewall rules the manager needs (also happens on every start).
 Verbunden ({0})	Connected ({0})
 Eigene IP: {0}	Own IP: {0}
 Seine IP lautet {0}.	Their IP is {0}.
@@ -4747,16 +4749,24 @@ function Receive-PelHostProbe {
     return $true
 }
 
-function Start-PelHostServer {
-    param([string]$Lobby, [string]$Password, [int]$DynProvider = 0, [string]$DynName = '', [string]$DynSecret = '')
-    if ($script:PelHostState.Running) { return }
-    Initialize-PelRvTypes
+# Eingehende Firewall-Regel für den Vermittlungsserver (UDP-Port des Servers). Wird auch
+# gebraucht, wenn nicht der Manager selbst, sondern das eigenständige PEL-Rendezvous auf
+# diesem PC den Port hält - sonst erreichen andere PCs den Server nicht.
+function Enable-PelHostFirewall {
     $name = "Project Earth LAN Vermittlungsserver (UDP $($script:PelHostPort))"
     try {
         if (-not (Get-NetFirewallRule -DisplayName $name -ErrorAction SilentlyContinue)) {
             New-NetFirewallRule -DisplayName $name -Direction Inbound -Action Allow -Protocol UDP -LocalPort $script:PelHostPort -Profile Any -ErrorAction Stop | Out-Null
+            Write-PelLog -Level 'HOST' -Message "Firewall-Regel angelegt: $name"
         }
     } catch { Write-PelLog -Level 'HOST' -Message "Firewall-Regel: $($_.Exception.Message)" }
+}
+
+function Start-PelHostServer {
+    param([string]$Lobby, [string]$Password, [int]$DynProvider = 0, [string]$DynName = '', [string]$DynSecret = '')
+    if ($script:PelHostState.Running) { return }
+    Initialize-PelRvTypes
+    Enable-PelHostFirewall
     Enable-PelP2pFirewall
     $srv = New-Object PelRendezvousServer
     $srv.Port = $script:PelHostPort
@@ -5154,6 +5164,11 @@ BOX "LIVE-STATUS"
     verteilt werden (siehe Kapitel 7).
   - "Fehlerlog exportieren": packt alle Protokolle in eine ZIP-Datei, die
     du bei Problemen weitergeben kannst.
+  - "Alle Ports freigeben": legt alle Windows-Firewall-Regeln an, die der
+    Manager braucht (Live-Status, Postfach, P2P, Vermittlungsserver, 9872,
+    Chat, Dateien, Voice, Social, Turniere). Das passiert auch automatisch
+    bei jedem Start. Nicht dabei: Remotedesktop, Datei-Server, Intranet
+    und Spiele-Server - die werden erst freigegeben, wenn du sie startest.
   - "Neue Version auf GitHub": erscheint nur, wenn es ein Update gibt.
     Öffnet die Download-Seite. Von selbst aktualisiert sich der Manager
     nur bei einem vom Betreiber signierten "Globalen Update" - mit
@@ -6323,6 +6338,11 @@ BOX "LIVE STATUS"
     automatically (see chapter 7).
   - "Export error log": packs all logs into a ZIP file you can pass on
     if there are problems.
+  - "Open all ports": creates all Windows Firewall rules the manager
+    needs (live status, mailbox, P2P, relay server, 9872, chat, files,
+    voice, social, tournaments). This also happens automatically on
+    every start. Not included: remote desktop, file server, intranet and
+    game servers - those are only opened when you start them.
   - "New version on GitHub": only appears when there is an update. Opens
     the download page. The manager only updates itself for a "global
     update" signed by the operator - with a notice window first (see
@@ -10092,6 +10112,9 @@ function Test-PelUdpPortBusy([int]$Port) {
         # New-Object verpackt den Fehler - die eigentliche Ursache steckt in InnerException
         $ex = $_.Exception
         while ($ex.InnerException) { $ex = $ex.InnerException }
+        # "Port belegt" ist hier das erwartete Ergebnis und kein Fehler: den Eintrag wieder
+        # aus der Fehlerliste nehmen, sonst steht bei jedem Start eine [FEHLER]-Zeile im Protokoll.
+        try { if ($global:Error.Count -gt 0) { $global:Error.RemoveAt(0) } } catch { }
         return ($ex -is [System.Net.Sockets.SocketException])
     } finally {
         if ($probe) { try { $probe.Close() } catch { } }
@@ -16553,6 +16576,69 @@ function Enable-PelMmFirewall {
     } catch {
         Write-PelLog "Firewall-Regel für Port 9877 konnte nicht angelegt werden: $($_.Exception.Message)" 'WARN'
     }
+}
+
+# ------------------------------------------------------------------------------
+# FIREWALL: ALLE PORTS DES MANAGERS FREIGEBEN (Start + Knopf "Alle Ports freigeben")
+# ------------------------------------------------------------------------------
+# Legt alle eingehenden Regeln an, die der Manager für seine festen Ports braucht - mit
+# genau den Namen, die die einzelnen Optionen auch benutzen (keine doppelten Regeln).
+# Läuft bei jedem Start des Control Centers und über den Knopf im Live-Status. Hintergrund:
+# Nach einem Zurücksetzen der Windows-Firewall fehlten Regeln, die sonst erst beim Öffnen
+# der jeweiligen Option angelegt wurden - andere PCs kamen dann nicht durch.
+# Bewusst NICHT enthalten (werden nur angelegt, wenn die Funktion eingeschaltet wird):
+# Remotedesktop 9870, Datei-Server und Intranet (frei wählbarer Port, nur Heimnetz/P2P),
+# Spiele-Server aus dem Server-Baukasten.
+function Get-PelFirewallPlan {
+    return @(
+        @{ Name = "Project Earth LAN Status $($script:PelStatusPort) (UDP)"; Proto = 'UDP'; Port = [int]$script:PelStatusPort },
+        @{ Name = "Project Earth LAN Postfach $($script:PelMailPort) (TCP)"; Proto = 'TCP'; Port = [int]$script:PelMailPort },
+        @{ Name = "Project Earth LAN P2P (UDP $($script:PelP2pUdpPort))"; Proto = 'UDP'; Port = [int]$script:PelP2pUdpPort },
+        @{ Name = "Project Earth LAN Vermittlungsserver (UDP $($script:PelHostPort))"; Proto = 'UDP'; Port = [int]$script:PelHostPort },
+        @{ Name = 'Project Earth LAN Manager 9872'; Proto = 'TCP'; Port = 9872 },
+        @{ Name = 'Project Earth LAN Manager 9872 (UDP)'; Proto = 'UDP'; Port = 9872 },
+        @{ Name = 'Project Earth LAN Voice 9873'; Proto = 'UDP'; Port = 9873 },
+        @{ Name = 'Project Earth LAN Chat 9874 (TCP)'; Proto = 'TCP'; Port = 9874 },
+        @{ Name = 'Project Earth LAN Chat 9874 (UDP)'; Proto = 'UDP'; Port = 9874 },
+        @{ Name = 'Project Earth LAN File 9876 (TCP)'; Proto = 'TCP'; Port = 9876 },
+        @{ Name = 'Project Earth LAN File 9876 (UDP)'; Proto = 'UDP'; Port = 9876 },
+        @{ Name = 'Project Earth LAN Social 9776 (TCP)'; Proto = 'TCP'; Port = 9776 },
+        @{ Name = 'Project Earth LAN Social 9776 (UDP)'; Proto = 'UDP'; Port = 9776 },
+        @{ Name = "Project Earth LAN Turniere 9877 (TCP)"; Proto = 'TCP'; Port = [int]$script:PelMmPort },
+        @{ Name = "Project Earth LAN Turniere 9877 (UDP)"; Proto = 'UDP'; Port = [int]$script:PelMmPort }
+    )
+}
+
+# Gibt zurück: @{ Total; Created = @(Namen); Enabled = @(Namen); Failed = @(Texte) }
+function Enable-PelAllFirewall {
+    $res = @{ Total = 0; Created = @(); Enabled = @(); Failed = @() }
+    $plan = @(Get-PelFirewallPlan)
+    $res.Total = $plan.Count
+    # EINE Abfrage für alle vorhandenen Regeln (einzelne Abfragen je Regel wären langsam)
+    $have = @{}
+    try {
+        foreach ($r in @(Get-NetFirewallRule -DisplayName 'Project Earth LAN*' -ErrorAction SilentlyContinue)) {
+            $have[[string]$r.DisplayName] = ([string]$r.Enabled -eq 'True')
+        }
+    } catch { }
+    foreach ($p in $plan) {
+        $n = [string]$p.Name
+        try {
+            if (-not $have.ContainsKey($n)) {
+                New-NetFirewallRule -DisplayName $n -Direction Inbound -Action Allow -Protocol $p.Proto -LocalPort $p.Port -RemoteAddress Any -Profile Any -ErrorAction Stop | Out-Null
+                $res.Created += $n
+            } elseif (-not $have[$n]) {
+                Enable-NetFirewallRule -DisplayName $n -ErrorAction Stop
+                $res.Enabled += $n
+            }
+        } catch {
+            $res.Failed += ($n + ': ' + $_.Exception.Message)
+        }
+    }
+    if ($res.Created.Count -gt 0) { Write-PelLog "Firewall: $($res.Created.Count) Regel(n) angelegt: $($res.Created -join '; ')" }
+    if ($res.Enabled.Count -gt 0) { Write-PelLog "Firewall: $($res.Enabled.Count) Regel(n) wieder eingeschaltet: $($res.Enabled -join '; ')" }
+    if ($res.Failed.Count -gt 0) { Write-PelLog "Firewall: $($res.Failed.Count) Regel(n) nicht angelegt: $($res.Failed -join ' | ')" 'WARN' }
+    return $res
 }
 
 # ------------------------------------------------------------------------------
@@ -40480,6 +40566,11 @@ function Show-MainDashboard {
         # laufenden Server auf diesem PC beigetreten (127.0.0.1).
         if (-not $script:PelHostState.Running -and (Test-PelUdpPortBusy ([int]$script:PelHostPort))) {
             Write-PelLog -Level 'HOST' -Message "UDP-Port $($script:PelHostPort) ist auf diesem PC schon belegt (PEL-Rendezvous läuft?) - kein zweiter Vermittlungsserver, Beitritt über den laufenden Server."
+            # BUGFIX 05.10.2026: Die Firewall-Regel für den Server-Port wurde bisher nur beim
+            # Start des EIGENEN Servers angelegt. Hält PEL-Rendezvous den Port, fehlte sie
+            # (z. B. nach einem Zurücksetzen der Firewall): Dieser PC kam über 127.0.0.1 in
+            # die Lobby, alle anderen (Steam Deck, zweiter PC) erreichten den Server nicht.
+            Enable-PelHostFirewall
             if (-not $Silent) {
                 $busyMsg = Get-PelText "Auf diesem PC läuft bereits ein Vermittlungsserver (PEL-Rendezvous) auf UDP-Port $($script:PelHostPort).`n`nDer Manager startet keinen zweiten, sondern tritt der Lobby über den laufenden Server bei." "A relay server (PEL-Rendezvous) is already running on this PC on UDP port $($script:PelHostPort).`n`nThe manager does not start a second one, it joins the lobby through the running server."
                 Show-PelMsg $busyMsg 'Lobby hosten' ([System.Windows.Forms.MessageBoxIcon]::Information) $mainForm
@@ -40890,7 +40981,11 @@ function Show-MainDashboard {
     }
     $btnJoinPlayer = & $newDashButton "Mitspielen" 230 344 $true
     $btnPlanner    = & $newDashButton "Spieleabend-Planer" 15 378 $false
-    $btnLogExport  = & $newDashButton "Fehlerlog exportieren" 230 378 $false
+    $btnLogExport  = & $newDashButton "Fehlerlog exportieren" 150 378 $false
+    $btnPlanner.Size = New-Object System.Drawing.Size(130, 28)
+    $btnLogExport.Size = New-Object System.Drawing.Size(146, 28)
+    $btnPortsOpen  = & $newDashButton "Alle Ports freigeben" 301 378 $false
+    $btnPortsOpen.Size = New-Object System.Drawing.Size(129, 28)
 
     # Neue Version auf GitHub? Button erscheint nur, wenn dort etwas Neueres liegt, und
     # öffnet dann nur die GitHub-Seite (kein automatischer Download/Austausch).
@@ -41129,6 +41224,8 @@ function Show-MainDashboard {
         Get-NetFirewallRule -DisplayName "Project Earth LAN Status $($script:PelStatusPort)*" -ErrorAction SilentlyContinue | Remove-NetFirewallRule -ErrorAction SilentlyContinue
         New-NetFirewallRule -DisplayName "Project Earth LAN Status $($script:PelStatusPort) (UDP)" -Direction Inbound -Action Allow -Protocol UDP -LocalPort $script:PelStatusPort -RemoteAddress Any -Profile Any -ErrorAction Stop | Out-Null
     } catch { }
+    # Beim Start alle Ports des Managers freigeben (siehe Enable-PelAllFirewall)
+    try { [void](Enable-PelAllFirewall) } catch { Write-PelLog "Firewall beim Start: $($_.Exception.Message)" 'WARN' }
 
     # ---- Zustand für "Wer spielt was", Spieleabende und Eigen-Filter --------------------
     # Windows liefert eigene Broadcasts auch an den Absender zurück - ohne diesen Filter
@@ -41691,6 +41788,27 @@ function Show-MainDashboard {
         $lblNextEvent.Text = Get-PelNextEventText
     })
     $btnLogExport.Add_Click({ Export-PelErrorLog -ParentForm $mainForm })
+    [PelI18n]::Tip($dashTip, $btnPortsOpen, 'Legt alle Windows-Firewall-Regeln an, die der Manager braucht (passiert auch bei jedem Start).')
+    $btnPortsOpen.Add_Click({
+        $mainForm.Cursor = [System.Windows.Forms.Cursors]::WaitCursor
+        $fw = $null
+        try { $fw = Enable-PelAllFirewall } catch { Write-PelLog "Alle Ports freigeben: $($_.Exception.Message)" 'WARN' } finally { $mainForm.Cursor = [System.Windows.Forms.Cursors]::Default }
+        if (-not $fw) {
+            Show-PelMsg (Get-PelText 'Die Firewall-Regeln konnten nicht geprüft werden. Details im Fehlerlog.' 'The firewall rules could not be checked. Details in the error log.') 'Firewall' ([System.Windows.Forms.MessageBoxIcon]::Warning) $mainForm
+            return
+        }
+        $changed = @($fw.Created) + @($fw.Enabled)
+        if ($fw.Failed.Count -gt 0) {
+            $msg = (Get-PelText "Nicht alle Regeln konnten angelegt werden ({0} von {1} fehlgeschlagen):" "Not all rules could be created ({0} of {1} failed):") -f $fw.Failed.Count, $fw.Total
+            Show-PelMsg ($msg + "`n`n" + ($fw.Failed -join "`n")) 'Firewall' ([System.Windows.Forms.MessageBoxIcon]::Warning) $mainForm
+        } elseif ($changed.Count -eq 0) {
+            $msg = (Get-PelText "Alle {0} Firewall-Regeln des Managers sind bereits vorhanden und aktiv." "All {0} firewall rules of the manager already exist and are active.") -f $fw.Total
+            Show-PelMsg $msg 'Firewall' ([System.Windows.Forms.MessageBoxIcon]::Information) $mainForm
+        } else {
+            $msg = (Get-PelText "{0} Firewall-Regel(n) neu angelegt oder wieder eingeschaltet:" "{0} firewall rule(s) created or re-enabled:") -f $changed.Count
+            Show-PelMsg ($msg + "`n`n" + ($changed -join "`n")) 'Firewall' ([System.Windows.Forms.MessageBoxIcon]::Information) $mainForm
+        }
+    })
 
     # ---- Postfach-Dienst (Option 7) --------------------------------------------------
     # Läuft hier im Control Center, damit Nachrichten auch ankommen, während Option 7
