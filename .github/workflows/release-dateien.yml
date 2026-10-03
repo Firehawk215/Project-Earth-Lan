@@ -1,4 +1,4 @@
-# Haengt die Manager-.exe und ihre .sha256.txt aus dem Hauptverzeichnis an ein Release an.
+# Haengt die Manager-.exe (und, falls vorhanden, PEL-Rendezvous.exe) samt .sha256.txt aus dem Hauptverzeichnis an ein Release an.
 # Start nur von Hand (Actions -> "Release-Dateien anhaengen" -> Run workflow), nie automatisch.
 # Vor dem Hochladen wird geprueft, dass die .exe zum SHA256 in der .sha256.txt passt.
 # Es wird nichts gebaut und nichts veraendert - die Dateien werden 1:1 aus dem Repository genommen.
@@ -41,3 +41,15 @@ jobs:
             found=1
           done
           if [ "$found" -ne 1 ]; then echo "Keine Manager-.exe im Hauptverzeichnis gefunden."; exit 1; fi
+          # Vermittlungsserver: nur wenn PEL-Rendezvous.exe im Hauptverzeichnis liegt (gleiche SHA256-Pruefung)
+          if [ -f "PEL-Rendezvous.exe" ]; then
+            txt="PEL-Rendezvous.exe.sha256.txt"
+            if [ ! -f "$txt" ]; then echo "Fehlt: $txt"; exit 1; fi
+            want=$(grep -oiE '[0-9a-f]{64}' "$txt" | head -n 1 | tr 'A-F' 'a-f')
+            have=$(sha256sum "PEL-Rendezvous.exe" | cut -d' ' -f1)
+            echo "PEL-Rendezvous.exe"
+            echo "  erwartet: $want"
+            echo "  berechnet: $have"
+            if [ "$want" != "$have" ]; then echo "SHA256 passt nicht - Abbruch."; exit 1; fi
+            gh release upload "$TAG" "PEL-Rendezvous.exe" "$txt" --clobber --repo "$GITHUB_REPOSITORY"
+          fi
