@@ -1,16 +1,23 @@
-# Haengt die Manager-.exe (und, falls vorhanden, PEL-Rendezvous.exe) samt .sha256.txt aus dem Hauptverzeichnis an ein Release an.
+# Haengt die Manager-.exe (und, falls vorhanden, PEL-Rendezvous.exe) samt .sha256.txt aus dem
+# Hauptverzeichnis an ein Release an. Gibt es das Release noch nicht, wird es NEU angelegt.
 # Start nur von Hand (Actions -> "Release-Dateien anhaengen" -> Run workflow), nie automatisch.
-# Vor dem Hochladen wird geprueft, dass die .exe zum SHA256 in der .sha256.txt passt.
+# Vor dem Hochladen wird geprueft, dass jede .exe zum SHA256 in ihrer .sha256.txt passt.
 # Es wird nichts gebaut und nichts veraendert - die Dateien werden 1:1 aus dem Repository genommen.
+#
+# Feld "tag":
+#   leer            -> neues Release "Manager-<Version>" (Version aus dem Namen der Manager-.exe),
+#                      Titel "Project Earth Lan Manager <Version>", als "Latest" markiert
+#   vorhandener Tag -> Dateien werden an dieses Release angehaengt (gleichnamige ersetzt)
+#   neuer Tag       -> Release mit diesem Tag wird neu angelegt
 name: Release-Dateien anhaengen
 
 on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release-Tag, an den die Dateien angehaengt werden'
-        required: true
-        default: 'Gaming'
+        description: 'Release-Tag (leer = neues Release "Manager-<Version>" anlegen)'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -20,36 +27,57 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: SHA256 pruefen und Dateien anhaengen
+      - name: SHA256 pruefen, Release anlegen und Dateien anhaengen
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           shopt -s nullglob
-          found=0
-          for exe in "Project Earth Lan Manager "*.exe; do
-            txt="$exe.sha256.txt"
+
+          # 1) Dateien sammeln und SHA256 pruefen - erst wenn ALLES passt, wird etwas hochgeladen
+          files=()
+          version=""
+          pruefe() {
+            exe="$1"; txt="$exe.sha256.txt"
             if [ ! -f "$txt" ]; then echo "Fehlt: $txt"; exit 1; fi
             want=$(grep -oiE '[0-9a-f]{64}' "$txt" | head -n 1 | tr 'A-F' 'a-f')
             have=$(sha256sum "$exe" | cut -d' ' -f1)
             echo "$exe"
-            echo "  erwartet: $want"
+            echo "  erwartet:  $want"
             echo "  berechnet: $have"
             if [ "$want" != "$have" ]; then echo "SHA256 passt nicht - Abbruch."; exit 1; fi
-            gh release upload "$TAG" "$exe" "$txt" --clobber --repo "$GITHUB_REPOSITORY"
-            found=1
+            files+=("$exe" "$txt")
+          }
+          for exe in "Project Earth Lan Manager "*.exe; do
+            pruefe "$exe"
+            v=$(echo "$exe" | grep -oE '[0-9]{4}\.[0-9]{2}\.[0-9]{2}' | head -n 1 || true)
+            if [ -n "$v" ]; then version="$v"; fi
           done
-          if [ "$found" -ne 1 ]; then echo "Keine Manager-.exe im Hauptverzeichnis gefunden."; exit 1; fi
-          # Vermittlungsserver: nur wenn PEL-Rendezvous.exe im Hauptverzeichnis liegt (gleiche SHA256-Pruefung)
-          if [ -f "PEL-Rendezvous.exe" ]; then
-            txt="PEL-Rendezvous.exe.sha256.txt"
-            if [ ! -f "$txt" ]; then echo "Fehlt: $txt"; exit 1; fi
-            want=$(grep -oiE '[0-9a-f]{64}' "$txt" | head -n 1 | tr 'A-F' 'a-f')
-            have=$(sha256sum "PEL-Rendezvous.exe" | cut -d' ' -f1)
-            echo "PEL-Rendezvous.exe"
-            echo "  erwartet: $want"
-            echo "  berechnet: $have"
-            if [ "$want" != "$have" ]; then echo "SHA256 passt nicht - Abbruch."; exit 1; fi
-            gh release upload "$TAG" "PEL-Rendezvous.exe" "$txt" --clobber --repo "$GITHUB_REPOSITORY"
+          if [ "${#files[@]}" -eq 0 ]; then echo "Keine Manager-.exe im Hauptverzeichnis gefunden."; exit 1; fi
+          if [ -f "PEL-Rendezvous.exe" ]; then pruefe "PEL-Rendezvous.exe"; fi
+
+          # 2) Release bestimmen: leerer Tag = neues Release fuer diese Version
+          if [ -z "$TAG" ]; then
+            if [ -z "$version" ]; then echo "Version nicht im Dateinamen der Manager-.exe gefunden."; exit 1; fi
+            TAG="Manager-$version"
           fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release '$TAG' gibt es schon - Dateien werden angehaengt."
+          else
+            title="Project Earth Lan Manager ${version:-$TAG}"
+            notes="Project Earth Lan Manager ${version:-} und PEL-Rendezvous (Vermittlungsserver).
+
+          Die .ps1-Quelltexte und die .sha256.txt liegen im Hauptverzeichnis des Repositorys.
+          Pruefsummen (SHA256):"
+            for f in "${files[@]}"; do
+              case "$f" in *.exe) notes="$notes
+          - $f: $(sha256sum "$f" | cut -d' ' -f1)";; esac
+            done
+            echo "Release '$TAG' wird neu angelegt: $title"
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "$title" --notes "$notes" --latest
+          fi
+
+          # 3) Dateien anhaengen
+          gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+          echo "Fertig: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"
