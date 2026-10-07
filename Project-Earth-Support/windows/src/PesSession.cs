@@ -450,7 +450,7 @@ public sealed class PesFileInfo
     public string Path = "";
     public long Size;
     public long Done;
-    public int State;        // 0 = wartet auf Antwort, 1 = laeuft, 2 = fertig, 3 = abgebrochen/Fehler
+    public int State;        // 0 = wartet auf Antwort, 1 = laeuft, 2 = fertig, 3 = abgebrochen/Fehler, 4 = gesendet, wartet auf Bestaetigung
     public string Error = "";
 }
 
@@ -678,7 +678,7 @@ public sealed class PesSession
         foreach (PesRel r in rel) r.Reset();
         CallState = PesProto.CallIdle; PartnerCam = false; PartnerMic = false;
         ShareActive = false; ControlActive = false;
-        jitter.Clear(); jitterPlaying = false; vSeq = -1; vParts = null;
+        lock (jitter) { jitter.Clear(); jitterPlaying = false; vSeq = -1; vParts = null; }
         ptrDirty = false;
         AbortTxLocked("Verbindung getrennt", false);
         AbortRxLocked("Verbindung getrennt", false);
@@ -824,7 +824,7 @@ public sealed class PesSession
                 if (m.Length >= 3) { PartnerCam = m[1] != 0; PartnerMic = m[2] != 0; Ev("MEDIA", m[1].ToString(), m[2].ToString()); }
                 break;
             case PesProto.M_SCRREQ:
-                if (m.Length >= 2 && Role == PesProto.RoleCustomer && m[1] >= 1 && m[1] <= 4) Ev("SCREEN", "req", m[1].ToString());
+                if (m.Length >= 2 && Role == PesProto.RoleCustomer && m[1] >= 1 && m[1] <= 5) Ev("SCREEN", "req", m[1].ToString());
                 break;
             case PesProto.M_SCRSTAT:
                 if (m.Length >= 9 && Role == PesProto.RoleHelper)
@@ -903,7 +903,7 @@ public sealed class PesSession
         if (media) SendMedia();
     }
 
-    private void ClearMediaLocked() { jitter.Clear(); jitterPlaying = false; vSeq = -1; vParts = null; PartnerCam = false; }
+    private void ClearMediaLocked() { lock (jitter) { jitter.Clear(); jitterPlaying = false; vSeq = -1; vParts = null; } PartnerCam = false; }
 
     public bool Call()
     {
@@ -1045,10 +1045,10 @@ public sealed class PesSession
     // =========================================================================
     // Bildschirm
     // =========================================================================
-    // Helfer: 1 = ansehen, 2 = ansehen und steuern, 3 = beenden, 4 = Steuerung abgeben
+    // Helfer: 1 = ansehen, 2 = ansehen und steuern, 3 = beenden, 4 = Steuerung abgeben, 5 = Komplettbild neu senden
     public bool RequestScreen(int sub)
     {
-        if (Role != PesProto.RoleHelper || sub < 1 || sub > 4) return false;
+        if (Role != PesProto.RoleHelper || sub < 1 || sub > 5) return false;
         return SendMsg(0, Msg(PesProto.M_SCRREQ, (byte)sub));
     }
 
@@ -1176,7 +1176,7 @@ public sealed class PesSession
             lock (lk)
             {
                 if (!handshake) return "Nicht verbunden.";
-                if (txFile != null && txFile.State < 2) return "Es laeuft bereits eine Uebertragung.";
+                if (txFile != null && (txFile.State < 2 || txFile.State == 4)) return "Es laeuft bereits eine Uebertragung.";
                 byte[] r = new byte[4];
                 using (RandomNumberGenerator rng = RandomNumberGenerator.Create()) rng.GetBytes(r);
                 PesFileInfo f = new PesFileInfo();

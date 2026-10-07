@@ -6,23 +6,39 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows:
     name: Windows (PowerShell 5.1, .NET Framework)
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Kern-Selbsttest (ohne Verlust)
+      - name: Kern-Selbsttest (ohne Verlust und mit 10 % Paketverlust)
         shell: powershell
         run: |
-          $PSVersionTable.PSVersion.ToString()
-          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src
-          if ($LASTEXITCODE -ne 0) { exit 1 }
-      - name: Kern-Selbsttest (10 % Paketverlust)
-        shell: powershell
+          New-Item -ItemType Directory -Force out | Out-Null
+          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src *>&1 | Tee-Object -FilePath out\kern.log
+          $a = $LASTEXITCODE
+          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src -LossPercent 10 *>&1 | Tee-Object -FilePath out\kern-verlust.log
+          if ($a -ne 0 -or $LASTEXITCODE -ne 0) { exit 1 }
+      - name: Windows-Praxistest (Bildschirm, Eingaben, Ton, Kamera)
+        if: always()
+        shell: cmd
         run: |
-          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src -LossPercent 10
-          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if not exist out mkdir out
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File Project-Earth-Support\windows\test\win_test.ps1 -Code Project-Earth-Support\windows\build\PesAll.cs -OutDir out > out\windows.log 2>&1
+          set RC=%ERRORLEVEL%
+          type out\windows.log
+          exit /b %RC%
+      - name: Ergebnisse ablegen
+        if: always()
+        shell: bash
+        run: |
+          cd out
+          git init -q
+          git checkout -q -b ergebnisse
+          git add -A
+          git -c user.name="github-actions" -c user.email="actions@users.noreply.github.com" commit -q -m "Ergebnisse Windows (${GITHUB_SHA::8})" || true
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" HEAD:refs/heads/claude/pes-ergebnisse-windows
