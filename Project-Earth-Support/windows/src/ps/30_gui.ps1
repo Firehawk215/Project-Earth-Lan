@@ -609,18 +609,26 @@ function New-PesMainWindow {
         $script:PesState.Closing = $true
     })
     $f.Add_Shown({
-        # Erst jetzt hat der Teiler seine Größe (vorher würde das Setzen der Mindestgrößen fehlschlagen)
-        try {
-            $sp = $script:PesUi.Split
-            $sp.SplitterDistance = [int]($sp.Height * 0.42)
-            $sp.Panel1MinSize = 150
-            $sp.Panel2MinSize = 200
-        } catch { }
+        Initialize-PesSplit
         Update-PesSideLayout
         Update-PesTexts
     })
     Update-PesSideLayout
     return $f
+}
+
+# Teilt den Hauptbereich in Video (oben, 42 %) und Fernwartung (unten). Geht erst, wenn das Fenster seine Größe hat -
+# beim Autostart (versteckt im Infobereich) also erst beim ersten Öffnen.
+function Initialize-PesSplit {
+    if ($script:PesState.SplitDone) { return }
+    try {
+        $sp = $script:PesUi.Split
+        if ($sp.Height -lt 380) { return }
+        $sp.SplitterDistance = [int]($sp.Height * 0.42)
+        $sp.Panel1MinSize = 150
+        $sp.Panel2MinSize = 200
+        $script:PesState.SplitDone = $true
+    } catch { }
 }
 
 function Set-PesLanguage {
@@ -953,6 +961,7 @@ function Show-PesMainWindow {
     try {
         $f.Show()
         if ($f.WindowState -eq 'Minimized') { $f.WindowState = 'Normal' }
+        Initialize-PesSplit
         $f.Activate()
         [void][PesNative]::SetForegroundWindow($f.Handle)
     } catch { }
