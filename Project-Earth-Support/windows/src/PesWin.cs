@@ -345,7 +345,7 @@ public sealed class PesScreen
                 if (runStart < 0) continue;
                 int rx = runStart * Tile, rw = Math.Min(sw, tx * Tile) - rx;
                 runStart = -1;
-                long key = ((long)rx << 20) | (long)rw;
+                long key = (long)(((ulong)(uint)rx << 20) | (ulong)(uint)rw);
                 int idx;
                 if (open.TryGetValue(key, out idx) && res[idx].Height + (y1 - y0) <= 256)
                 {
