@@ -5485,6 +5485,19 @@ function New-PesPanel {
     return $p
 }
 
+# Knopfleiste, die bei schmalem Fenster in eine zweite Zeile umbricht (nichts wird abgeschnitten)
+function New-PesBar {
+    param([string]$Dock = 'Top')
+    $p = New-Object System.Windows.Forms.FlowLayoutPanel
+    $p.Dock = $Dock
+    $p.AutoSize = $true
+    $p.AutoSizeMode = 'GrowAndShrink'
+    $p.WrapContents = $true
+    $p.BackColor = $script:C.Surface
+    $p.Padding = New-Object System.Windows.Forms.Padding(6, 4, 6, 4)
+    return $p
+}
+
 function New-PesCheck {
     param([string]$Text, [int]$X, [int]$Y, [int]$W, $Parent = $null)
     $c = New-Object System.Windows.Forms.CheckBox
@@ -5842,14 +5855,14 @@ function New-PesMainWindow {
     $vid.Controls.Add($self)
     $u.VidSelf = $self
     $vid.Add_Resize({ $s = $script:PesUi.VidSelf; if ($s) { $s.Location = New-Object System.Drawing.Point(($this.Width - $s.Width - 10), ($this.Height - $s.Height - 10)) } })
-    $barCall = New-PesPanel -H 46 -Color $script:C.Surface
-    $barCall.Dock = 'Bottom'
-    $u.BtnCall = New-PesButton -Text 'Anrufen' -X 10 -Y 7 -W 150 -H 32 -Kind 'ok' -Parent $barCall
-    $u.BtnMic = New-PesButton -Text 'Mikrofon: an' -X 168 -Y 7 -W 130 -H 32 -Parent $barCall
-    $u.BtnCam = New-PesButton -Text 'Kamera: aus' -X 306 -Y 7 -W 130 -H 32 -Parent $barCall
-    $u.LblCall = New-PesLabel -Text '' -X 448 -Y 13 -W 440 -H 22 -Kind 'muted' -Parent $barCall
+    $barCall = New-PesBar -Dock 'Bottom'
+    $u.BtnCall = New-PesButton -Text 'Anrufen' -X 0 -Y 0 -W 150 -H 32 -Kind 'ok' -Parent $barCall
+    $u.BtnMic = New-PesButton -Text 'Mikrofon: an' -X 0 -Y 0 -W 130 -H 32 -Parent $barCall
+    $u.BtnCam = New-PesButton -Text 'Kamera: aus' -X 0 -Y 0 -W 130 -H 32 -Parent $barCall
+    $u.LblCall = New-PesLabel -Text '' -X 0 -Y 0 -W 100 -H 22 -Kind 'muted' -Parent $barCall
     $u.LblCall.Font = $script:FontUi
-    $u.LblCall.Anchor = 'Top,Left,Right'
+    $u.LblCall.AutoSize = $true
+    $u.LblCall.Margin = New-Object System.Windows.Forms.Padding(8, 10, 4, 4)
     $split.Panel1.Controls.Add($vid)
     $split.Panel1.Controls.Add($barCall)
     $vid.BringToFront()
@@ -5869,23 +5882,25 @@ function New-PesMainWindow {
     $u.ShareText.Font = $script:FontUi
     $u.ShareText.Anchor = 'Top,Left,Right'
 
-    $barH = New-PesPanel -H 46 -Color $script:C.Surface
-    $barH.Dock = 'Top'
+    $barH = New-PesBar -Dock 'Top'
     $u.BarHelper = $barH
-    $u.BtnView = New-PesButton -Text 'Bildschirm anfordern' -X 10 -Y 7 -W 170 -H 32 -Kind 'accent' -Parent $barH
-    $u.BtnControl = New-PesButton -Text 'Steuerung anfordern' -X 188 -Y 7 -W 160 -H 32 -Parent $barH
-    $u.CmbQuality = New-PesCombo -X 356 -Y 11 -W 110 -Parent $barH
-    $u.CmbMonitor = New-PesCombo -X 474 -Y 11 -W 120 -Parent $barH
-    $u.BtnKeys = New-PesButton -Text 'Tasten' -X 602 -Y 7 -W 84 -H 32 -Parent $barH
-    $u.BtnShot = New-PesButton -Text 'Foto' -X 694 -Y 7 -W 70 -H 32 -Parent $barH
-    $u.BtnFull = New-PesButton -Text 'Großansicht' -X 772 -Y 7 -W 110 -H 32 -Parent $barH
-    $barC = New-PesPanel -H 46 -Color $script:C.Surface
-    $barC.Dock = 'Top'
+    $u.BtnView = New-PesButton -Text 'Bildschirm anfordern' -X 0 -Y 0 -W 170 -H 32 -Kind 'accent' -Parent $barH
+    $u.BtnControl = New-PesButton -Text 'Steuerung anfordern' -X 0 -Y 0 -W 160 -H 32 -Parent $barH
+    $u.CmbQuality = New-PesCombo -X 0 -Y 0 -W 100 -Parent $barH
+    $u.CmbMonitor = New-PesCombo -X 0 -Y 0 -W 116 -Parent $barH
+    $u.CmbQuality.Margin = New-Object System.Windows.Forms.Padding(3, 7, 3, 3)
+    $u.CmbMonitor.Margin = New-Object System.Windows.Forms.Padding(3, 7, 3, 3)
+    $u.BtnKeys = New-PesButton -Text 'Tasten' -X 0 -Y 0 -W 80 -H 32 -Parent $barH
+    $u.BtnShot = New-PesButton -Text 'Foto' -X 0 -Y 0 -W 70 -H 32 -Parent $barH
+    $u.BtnFull = New-PesButton -Text 'Großansicht' -X 0 -Y 0 -W 110 -H 32 -Parent $barH
+    $barC = New-PesBar -Dock 'Top'
     $u.BarCustomer = $barC
-    $u.BtnShare = New-PesButton -Text 'Bildschirm freigeben' -X 10 -Y 7 -W 190 -H 32 -Kind 'accent' -Parent $barC
-    $u.BtnAllow = New-PesButton -Text 'Steuerung erlauben' -X 208 -Y 7 -W 180 -H 32 -Parent $barC
-    $lblHot = New-PesLabel -Text 'Notfall-Stopp: Strg+Umschalt+F12' -X 400 -Y 13 -W 400 -H 22 -Kind 'muted' -Parent $barC
+    $u.BtnShare = New-PesButton -Text 'Bildschirm freigeben' -X 0 -Y 0 -W 190 -H 32 -Kind 'accent' -Parent $barC
+    $u.BtnAllow = New-PesButton -Text 'Steuerung erlauben' -X 0 -Y 0 -W 180 -H 32 -Parent $barC
+    $lblHot = New-PesLabel -Text 'Notfall-Stopp: Strg+Umschalt+F12' -X 0 -Y 0 -W 300 -H 22 -Kind 'muted' -Parent $barC
     $lblHot.Font = $script:FontUi
+    $lblHot.AutoSize = $true
+    $lblHot.Margin = New-Object System.Windows.Forms.Padding(8, 10, 4, 4)
 
     $split.Panel2.Controls.Add($view)
     $split.Panel2.Controls.Add($info)

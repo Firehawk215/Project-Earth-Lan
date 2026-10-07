@@ -1,0 +1,4 @@
+storeFile=keystore/pes-release.jks
+storePassword=HIER_PASSWORT
+keyAlias=pes
+keyPassword=HIER_PASSWORT
