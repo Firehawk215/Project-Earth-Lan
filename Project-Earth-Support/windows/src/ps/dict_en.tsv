@@ -1,0 +1,264 @@
+# Deutsch<TAB>English - ein Eintrag je Zeile. Endet der deutsche Teil mit *, gilt er als Anfang.
+Abbrechen	Cancel
+Ablehnen	Decline
+Adresse kopieren	Copy address
+Alles entfernen	Remove everything
+Alles entfernen ...	Remove everything ...
+Alles, was auf dem Bildschirm steht, wird übertragen. Sie können die Freigabe jederzeit beenden.	Everything shown on the screen is transmitted. You can stop sharing at any time.
+Allgemein	General
+Als Helfer erzeugst du ihn mit "Neuer Code".	As the helper you create it with "New code".
+Anfrage abgelehnt.	Request declined.
+Anfrage des Helfers	Request from the helper
+Anleitung und Hilfe	Guide and help
+Annehmen	Accept
+Anruf abbrechen	Cancel call
+Anruf beendet.	Call ended.
+Anruf gestartet ...	Calling ...
+Anruf verbunden.	Call connected.
+Anrufen	Call
+Ansehen und steuern	View and control
+Ansicht beenden	Stop viewing
+Auf den Desktop speichern	Save to desktop
+Auflegen	Hang up
+Ausführen (Windows+R)	Run (Windows+R)
+Automatisch (empfohlen)	Automatic (recommended)
+Autostart:	Autostart:
+Beenden	Stop
+Beim Minimieren in den Infobereich (neben der Uhr) legen	Minimize to the notification area (next to the clock)
+Bereit für einen Anruf	Ready for a call
+Bildschirm anfordern	Request screen
+Bildschirm angefordert - der Kunde muss zustimmen.	Screen requested - the customer has to agree.
+Bildschirm freigeben	Share screen
+Bildschirm wird an {0} übertragen - mit Steuerung von Maus und Tastatur.	Screen is being transmitted to {0} - with control of mouse and keyboard.
+Bildschirm wird an {0} übertragen - nur ansehen.	Screen is being transmitted to {0} - view only.
+Bildschirm wird übertragen an {0}	Screen is being transmitted to {0}
+Bildschirm wird übertragen an {0} - MIT STEUERUNG	Screen is being transmitted to {0} - WITH CONTROL
+Bildschirm {0}	Screen {0}
+Bildschirmfoto gespeichert: {0}	Screenshot saved: {0}
+Bildschirmfoto konnte nicht gespeichert werden:	Screenshot could not be saved:
+Bitte einen Namen eintragen.	Please enter a name.
+Bitte zuerst die Adresse des Vermittlers eintragen (Name oder IP, optional mit :Port).	Please enter the address of the mediator first (name or IP, optionally with :port).
+Chat und Verlauf	Chat and history
+Das Datei-Angebot wurde zurückgezogen: {0}	The file offer was withdrawn: {0}
+Datei angeboten: {0} - warte auf die Zustimmung des Partners.	File offered: {0} - waiting for the partner to agree.
+Datei empfangen	Receive file
+Datei empfangen und geprüft: {0}	File received and verified: {0}
+Datei für den Partner auswählen	Choose a file for the partner
+Datei gesendet und geprüft: {0}	File sent and verified: {0}
+Datei kann nicht empfangen werden:	File cannot be received:
+Datei kann nicht gesendet werden:	File cannot be sent:
+Datei senden	Send file
+Datei-Übertragung abgebrochen: {0}	File transfer aborted: {0}
+Der Einladungscode ist ungültig. Er beginnt mit "PES1:" und kommt vom Helfer.	The invitation code is invalid. It starts with "PES1:" and comes from the helper.
+Der Helfer hat die Ansicht beendet.	The helper stopped viewing.
+Der Helfer hat die Steuerung abgegeben.	The helper released control.
+Der Helfer sieht Ihren Bildschirm erst, wenn Sie zustimmen.	The helper only sees your screen after you agree.
+Der Kunde erlaubt die Steuerung nicht (nur ansehen).	The customer does not allow control (view only).
+Der Kunde hat die Anfrage abgelehnt.	The customer declined the request.
+Der Kunde überträgt seinen Bildschirm - Steuerung erlaubt.	The customer is sharing the screen - control allowed.
+Der Kunde überträgt seinen Bildschirm - nur ansehen.	The customer is sharing the screen - view only.
+Der Kunde überträgt seinen Bildschirm nicht mehr.	The customer is no longer sharing the screen.
+Der Kunde überträgt seinen Bildschirm nicht.	The customer is not sharing the screen.
+Der Partner hat den Anruf abgelehnt.	The partner declined the call.
+Der Partner hat die Datei abgelehnt: {0}	The partner declined the file: {0}
+Der Partner hat nicht abgenommen.	The partner did not answer.
+Der UDP-Port muss zwischen 1024 und 65535 liegen.	The UDP port must be between 1024 and 65535.
+Der UDP-Port und der Vermittler-Port müssen verschieden sein.	The UDP port and the mediator port must be different.
+Der Vermittler konnte nicht starten (Port {0} belegt?):	The mediator could not start (port {0} in use?):
+Der Vermittler läuft auf UDP-Port {0}.	The mediator is running on UDP port {0}.
+Der Vermittler-Port muss zwischen 1024 und 65535 liegen.	The mediator port must be between 1024 and 65535.
+Desktop anzeigen (Windows+D)	Show desktop (Windows+D)
+Die Kamera des Partners ist aus.	The partner's camera is off.
+Die Sitzung läuft noch. Programm wirklich beenden?	The session is still running. Really quit the program?
+Die Vermittler-Adresse im Einladungscode ist ungültig.	The mediator address in the invitation code is invalid.
+Die öffentliche Adresse (DynDNS-Name) wird im Fenster des Vermittlers eingetragen - je Port getrennt.	The public address (DynDNS name) is entered in the mediator window - separately for each port.
+Die öffentliche Adresse ist ungültig (nur Name oder IP, ohne Port).	The public address is invalid (name or IP only, without port).
+Diese Adresse trägt der Helfer als "Vermittler-Adresse" ein:	The helper enters this address as "Mediator address":
+Echo-Sperre: Mikrofon stumm, solange der Partner spricht (ohne Kopfhörer empfohlen)	Echo lock: microphone muted while the partner is speaking (recommended without headphones)
+Eigener Mini-Vermittler (nur für Helfer)	Own mini mediator (helpers only)
+Einfügen	Paste
+Eingehender Anruf	Incoming call
+Eingehender Anruf ...	Incoming call ...
+Einladungscode (PES1:...)	Invitation code (PES1:...)
+Einladungscode in die Zwischenablage kopiert. Schicke ihn dem Kunden (z. B. per Messenger oder E-Mail).	Invitation code copied to the clipboard. Send it to the customer (e.g. by messenger or e-mail).
+Empfange Datei: {0}	Receiving file: {0}
+Empfange {0}: {1} von {2}	Receiving {0}: {1} of {2}
+Empfangene Dateien	Received files
+Empfangene Dateien und das Programm selbst bleiben erhalten.	Received files and the program itself are kept.
+Entfernen	Remove
+Entfernt den Autostart, alle Firewall-Regeln "Project Earth Support ..." und den Ordner mit Einstellungen und Protokollen.	Removes the autostart, all firewall rules "Project Earth Support ..." and the folder with settings and logs.
+Erlauben	Allow
+Erlauben Sie das nur Personen, denen Sie vertrauen. Notfall-Stopp: Strg+Umschalt+F12	Only allow this for people you trust. Emergency stop: Ctrl+Shift+F12
+Erste Kamera	First camera
+Es klingelt beim Partner ...	Ringing ...
+Fenster schließen (Alt+F4)	Close window (Alt+F4)
+Fenster wechseln (Alt+Tab)	Switch window (Alt+Tab)
+Fernwartung	Remote support
+Firewall-Regeln "Project Earth Support ...":	Firewall rules "Project Earth Support ...":
+Firewall-Regeln entfernen	Remove firewall rules
+Firewall-Regeln werden entfernt ...	Removing firewall rules ...
+Foto	Photo
+Freigabe beenden	Stop sharing
+Freigabe beendet.	Sharing stopped.
+Gespeichert	Saved
+Gespeichert. Die Änderungen gelten ab dem nächsten Verbinden.	Saved. The changes apply from the next connection.
+Getrennt.	Disconnected.
+Großansicht	Large view
+Helfer	helper
+Hier erscheint das Bild des Partners, sobald ein Anruf läuft.	The partner's picture appears here as soon as a call is running.
+Hier erscheint der Bildschirm des Kunden.	The customer's screen appears here.
+Hilfe	Help
+Hinweis: Bei Sperrbildschirm oder Windows-Sicherheitsabfrage (UAC) gibt es kurz kein Bild.	Note: on the lock screen or during a Windows security prompt (UAC) there is no picture for a moment.
+Ich	Me
+Ich brauche Hilfe	I need help
+Ich helfe	I am helping
+Ihr Bildschirm wird NICHT übertragen.	Your screen is NOT being transmitted.
+Ihr Bildschirm wird an {0} übertragen - mit Steuerung.	Your screen is being transmitted to {0} - with control.
+Ihr Bildschirm wird an {0} übertragen - nur ansehen.	Your screen is being transmitted to {0} - view only.
+Im Gespräch	In call
+Im selben Netz (LAN/WLAN) reicht die Adresse dieses PCs. Für Kunden im Internet: im Router den UDP-Port an diesen PC weiterleiten und hier die öffentliche Adresse (DynDNS-Name oder feste IP) eintragen.	In the same network (LAN/Wi-Fi) the address of this PC is enough. For customers on the internet: forward the UDP port to this PC in the router and enter the public address (DynDNS name or fixed IP) here.
+In den Infobereich	To notification area
+Ja, erlauben	Yes, allow
+Ja, freigeben	Yes, share
+Kamera	Camera
+Kamera: an	Camera: on
+Kamera: aus	Camera: off
+Kamerabild steht auf dem Kopf: umdrehen	Camera picture is upside down: flip it
+Kopieren	Copy
+Kunde	customer
+Lautsprecher	Speaker
+Live-Video-Chat	Live video chat
+Maus und Tastatur kann er nur bedienen, wenn Sie das zusätzlich erlauben.	Mouse and keyboard can only be used if you additionally allow it.
+Mein Name	My name
+Mikrofon	Microphone
+Mikrofon: an	Microphone: on
+Mikrofon: aus	Microphone: off
+Mit "Bildschirm anfordern" fragst du ihn danach.	Ask for it with "Request screen".
+Mit Windows starten (bleibt im Infobereich, verbindet nicht von selbst)	Start with Windows (stays in the notification area, never connects by itself)
+Nehmen Sie nur Dateien an, die Sie erwarten. Gespeichert wird im Ordner "Downloads\Project Earth Support".	Only accept files you are expecting. They are saved in the folder "Downloads\Project Earth Support".
+Nein	No
+Netzwerk	Network
+Netzwerkadapter	Network adapter
+Neuer Code	New code
+Neuer Einladungscode erzeugt. Mit "Kopieren" in die Zwischenablage legen und dem Kunden schicken.	New invitation code created. Put it on the clipboard with "Copy" and send it to the customer.
+Nicht verbunden. Rechts den Einladungscode einfügen und auf Verbinden klicken.	Not connected. Paste the invitation code on the right and click Connect.
+Normal	Normal
+Normalansicht	Normal view
+Notfall-Stopp jederzeit: Strg+Umschalt+F12	Emergency stop at any time: Ctrl+Shift+F12
+Notfall-Stopp: Freigabe beendet.	Emergency stop: sharing stopped.
+Notfall-Stopp: Strg+Umschalt+F12	Emergency stop: Ctrl+Shift+F12
+Nur ansehen	View only
+Ohne eigenen Server: unten auf "Vermittler" klicken - er läuft dann auf diesem PC.	Without a server of your own: click "Mediator" at the bottom - it then runs on this PC.
+Optionen	Options
+Protokoll-Ordner öffnen	Open log folder
+Scharf	Sharp
+Schließen	Close
+Sende Datei: {0}	Sending file: {0}
+Sende {0}: {1} von {2}	Sending {0}: {1} of {2}
+Senden	Send
+Sitzung gestartet.	Session started.
+Sitzung läuft - warte auf den Helfer.	Session running - waiting for the helper.
+Sitzung läuft - warte auf den Kunden. Schicke ihm den Einladungscode.	Session running - waiting for the customer. Send them the invitation code.
+Sitzung mit {0} wirklich beenden?	Really end the session with {0}?
+Soll {0} Ihren Bildschirm jetzt sehen können?	Should {0} be able to see your screen now?
+Soll {0} Maus und Tastatur dieses PCs bedienen dürfen?	Should {0} be allowed to use mouse and keyboard of this PC?
+Sparsam	Economy
+Speichern	Save
+Speichern fehlgeschlagen	Saving failed
+Sprache	Language
+Standard	Default
+Standardgerät (Windows)	Default device (Windows)
+Steuerung anfordern	Request control
+Steuerung angefordert - der Kunde muss zustimmen.	Control requested - the customer has to agree.
+Steuerung erlauben	Allow control
+Steuerung gesperrt - der Helfer kann nur noch zusehen.	Control locked - the helper can only watch now.
+Steuerung sperren	Lock control
+Steuerung: an	Control: on
+Task-Manager (Strg+Umschalt+Esc)	Task Manager (Ctrl+Shift+Esc)
+Tasten	Keys
+Teilnehmer: {0}   weitergeleitete Pakete: {1}	Participants: {0}   forwarded packets: {1}
+Ton und Kamera	Sound and camera
+Trennen	Disconnect
+UDP-Port (Standard 9890)	UDP port (default 9890)
+UDP-Port (Standard 9892)	UDP port (default 9892)
+Verbinde mit dem Vermittler {0} ...	Connecting to the mediator {0} ...
+Verbinden	Connect
+Verbinden fehlgeschlagen:	Connecting failed:
+Verbindung	Connection
+Verbindung wird aufgebaut ...	Connecting ...
+Verbunden mit {0}	Connected to {0}
+Vermittler	Mediator
+Vermittler beenden	Stop mediator
+Vermittler zusammen mit dem Autostart starten	Start the mediator together with the autostart
+Vermittler-Adresse (Name oder IP, optional :Port)	Mediator address (name or IP, optional :port)
+Verpasster Anruf.	Missed call.
+Warte auf Zustimmung: {0}	Waiting for consent: {0}
+Warte auf das Bild ...	Waiting for the picture ...
+Warte auf die Zustimmung des Kunden ...	Waiting for the customer to agree ...
+Weg: {0}	Path: {0}
+Windows-Taste	Windows key
+Wird entfernt ...	Removing ...
+Wählen	Choose
+Zufallsport	Random port
+Zurück	Back
+direkt	direct
+merken	remember
+ruft an (Video-Chat mit Ton)	is calling (video chat with sound)
+verbindet ...	connecting ...
+{0} ist nicht mehr verbunden.	{0} is no longer connected.
+{0} ist verbunden ({1}, {2}).	{0} is connected ({1}, {2}).
+{0} möchte Ihnen eine Datei senden:	{0} wants to send you a file:
+{0} möchte Ihren Bildschirm sehen und Maus und Tastatur bedienen.	{0} wants to see your screen and use mouse and keyboard.
+{0} möchte Ihren Bildschirm sehen.	{0} wants to see your screen.
+{0} möchte zusätzlich Maus und Tastatur bedienen.	{0} additionally wants to use mouse and keyboard.
+{0} ruft an.	{0} is calling.
+Öffentliche Adresse	Public address
+Öffnen	Open
+Über diesen Vermittler laufen gerade Sitzungen. Wirklich beenden?	Sessions are currently running through this mediator. Really stop it?
+Übernehmen	Apply
+Übertragung: {0} Bilder/s, {1} kbit/s	Transmission: {0} frames/s, {1} kbit/s
+über den Vermittler (Relay)	via the mediator (relay)
+~Getrennt	Disconnected
+~Verbunden	Connected
+~Schluessel werden abgeleitet ...	Deriving keys ...
+~Verbinde mit Vermittlungsserver ...	Connecting to the mediator ...
+~Server nicht erreichbar - bestehende Direktverbindungen bleiben aktiv	Mediator not reachable - existing direct connections stay active
+~Fehler: *	Error: *
+~Server-Adresse nicht aufloesbar	Mediator address cannot be resolved
+~Veraltete oder neuere Programmversion - bitte aktualisieren.	Outdated or newer program version - please update.
+~Server ausgelastet (zu viele Lobbys).	Mediator is full (too many sessions).
+~Keine freie virtuelle IP.	No free virtual address.
+~P2P laeuft bereits.	The connection is already running.
+~Der Lobby-Name muss mindestens 3 Zeichen haben.	The session name must have at least 3 characters.
+~Das Lobby-Passwort muss mindestens 6 Zeichen haben.	The session password must have at least 6 characters.
+~Kein Vermittlungsserver eingetragen.	No mediator entered.
+~Verbindung zum Partner verloren.	Connection to the partner lost.
+~Partner hat neu gestartet.	The partner restarted.
+~Der Partner hat die Sitzung beendet.	The partner ended the session.
+~Verbindung getrennt	connection closed
+~Datei nicht gefunden.	File not found.
+~Datei ist zu gross.	File is too large.
+~Nicht verbunden.	Not connected.
+~Es laeuft bereits eine Uebertragung.	A transfer is already running.
+~Kein offenes Angebot.	No open offer.
+~abgelehnt	declined
+~vom Absender abgebrochen	cancelled by the sender
+~vom Empfaenger abgebrochen	cancelled by the receiver
+~Empfaenger meldet Fehler	receiver reports an error
+~mehr Daten als angekuendigt	more data than announced
+~Pruefsumme stimmt nicht	checksum does not match
+~abgebrochen	cancelled
+~Kein Lautsprecher und kein Mikrofon gefunden - der Anruf laeuft ohne Ton.	No speaker and no microphone found - the call runs without sound.
+~Kein Lautsprecher gefunden - du hoerst den Partner nicht.	No speaker found - you cannot hear the partner.
+~Kein Mikrofon gefunden - der Partner hoert dich nicht.	No microphone found - the partner cannot hear you.
+~Keine Kamera gefunden.	No camera found.
+~Die gewaehlte Kamera ist nicht angeschlossen.	The selected camera is not connected.
+~Die Kamera liefert keine Bilder mehr.	The camera no longer delivers pictures.
+~Die Kamera wurde getrennt.	The camera was disconnected.
+~Kamera konnte nicht geoeffnet werden (wird sie von einem anderen Programm benutzt?) *	Camera could not be opened (is another program using it?) *
+~Die Kamera liefert kein passendes Bildformat *	The camera does not deliver a suitable picture format *
+~Media Foundation nicht verfuegbar *	Media Foundation not available *
+~angelegt	created
+~vorhanden	exists
+~entfernt	removed
+~entfernt: *	removed: *

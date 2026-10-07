@@ -1,0 +1,22 @@
+Schluessel werden abgeleitet ...	Schlüssel werden abgeleitet ...
+Server-Adresse nicht aufloesbar	Vermittler-Adresse lässt sich nicht auflösen
+Verbinde mit Vermittlungsserver ...	Verbinde mit dem Vermittler ...
+Server nicht erreichbar - bestehende Direktverbindungen bleiben aktiv	Vermittler nicht erreichbar - bestehende Direktverbindungen bleiben aktiv
+Fehler: *	Fehler: *
+P2P laeuft bereits.	Die Verbindung läuft bereits.
+Der Lobby-Name muss mindestens 3 Zeichen haben.	Der Sitzungsname muss mindestens 3 Zeichen haben.
+Das Lobby-Passwort muss mindestens 6 Zeichen haben.	Das Sitzungs-Passwort muss mindestens 6 Zeichen haben.
+Kein Vermittlungsserver eingetragen.	Kein Vermittler eingetragen.
+Server ausgelastet (zu viele Lobbys).	Der Vermittler ist ausgelastet (zu viele Sitzungen).
+Datei ist zu gross.	Datei ist zu groß.
+Es laeuft bereits eine Uebertragung.	Es läuft bereits eine Übertragung.
+vom Empfaenger abgebrochen	vom Empfänger abgebrochen
+Empfaenger meldet Fehler	Empfänger meldet einen Fehler
+mehr Daten als angekuendigt	mehr Daten als angekündigt
+Pruefsumme stimmt nicht	Prüfsumme stimmt nicht
+Kein Lautsprecher und kein Mikrofon gefunden - der Anruf laeuft ohne Ton.	Kein Lautsprecher und kein Mikrofon gefunden - der Anruf läuft ohne Ton.
+Kein Lautsprecher gefunden - du hoerst den Partner nicht.	Kein Lautsprecher gefunden - du hörst den Partner nicht.
+Kein Mikrofon gefunden - der Partner hoert dich nicht.	Kein Mikrofon gefunden - der Partner hört dich nicht.
+Die gewaehlte Kamera ist nicht angeschlossen.	Die gewählte Kamera ist nicht angeschlossen.
+Kamera konnte nicht geoeffnet werden (wird sie von einem anderen Programm benutzt?) *	Kamera konnte nicht geöffnet werden (wird sie von einem anderen Programm benutzt?) *
+Media Foundation nicht verfuegbar *	Media Foundation nicht verfügbar *

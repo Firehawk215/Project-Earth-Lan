@@ -32,6 +32,20 @@ jobs:
           set RC=%ERRORLEVEL%
           type out\windows.log
           exit /b %RC%
+      - name: Fertiges Skript - Parser (PowerShell 5.1) und Selbsttest mit Oberflaeche
+        if: always()
+        shell: cmd
+        run: |
+          if not exist out mkdir out
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File Project-Earth-Support\windows\tools\parse_check.ps1 -Path Project-Earth-Support\windows\Project-Earth-Support.ps1 > out\parser.log 2>&1
+          set RC1=%ERRORLEVEL%
+          type out\parser.log
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -STA -File Project-Earth-Support\windows\Project-Earth-Support.ps1 -Selbsttest -Relaunched > out\selbsttest.log 2>&1
+          set RC2=%ERRORLEVEL%
+          type out\selbsttest.log
+          if exist "C:\ProgramData\Project-Earth-Support\logs" xcopy /y /q "C:\ProgramData\Project-Earth-Support\logs\*" out\ >nul
+          if not "%RC1%"=="0" exit /b 1
+          exit /b %RC2%
       - name: Ergebnisse ablegen
         if: always()
         shell: bash

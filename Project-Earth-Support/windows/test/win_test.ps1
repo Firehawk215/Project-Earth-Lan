@@ -14,12 +14,13 @@ function WaitFor([scriptblock]$cond, [int]$ms = 10000) { $sw = [Diagnostics.Stop
 [void][IO.Directory]::CreateDirectory($OutDir)
 
 # Sprache
-[PesI18n]::Load("Hallo`tHello`nFehler: *`tError: *`nDatei {0}`tFile {0}")
+[PesI18n]::Load("Hallo`tHello`nFehler: *`tError: *`nDatei {0}`tFile {0}`nlaeuft`truns", ("laeuft`tl" + [char]0xE4 + "uft"))
 Check ([PesI18n]::T('Hallo') -eq 'Hallo') 'Deutsch bleibt unveraendert'
 [PesI18n]::Lang = 'en'
 Check ([PesI18n]::T('Hallo') -eq 'Hello' -and [PesI18n]::T('Fehler: Hallo') -eq 'Error: Hello' -and [PesI18n]::F('Datei {0}', 'x') -eq 'File x') 'Englisch: Wort, Anfang und Platzhalter'
 $lbl = New-Object System.Windows.Forms.Label; [PesI18n]::Reg($lbl, 'Hallo'); [PesI18n]::Lang = 'de'; [PesI18n]::ApplyAll()
 Check ($lbl.Text -eq 'Hallo') 'Umschalten beschriftet registrierte Controls neu'
+Check ([PesI18n]::Core('laeuft') -eq ('l' + [char]0xE4 + 'uft') -and [PesI18n]::Core('unbekannt') -eq 'unbekannt') 'Kern-Meldungen: deutsche Schreibweise mit Umlauten'
 
 $mons = [PesNative]::Monitors()
 Info ("Bildschirme: " + (($mons | ForEach-Object { "$($_.Width)x$($_.Height)@$($_.X),$($_.Y)" }) -join ' | '))
@@ -66,7 +67,7 @@ Check (WaitFor { $hH.View.Rects -gt $before } 8000) 'Geaenderter Bereich wird na
 Start-Sleep -Milliseconds 1200; [System.Windows.Forms.Application]::DoEvents()
 [void]$hH.View.SaveImage((Join-Path $OutDir 'fernbild-fenster.png'))
 $bmp = New-Object System.Drawing.Bitmap((Join-Path $OutDir 'fernbild-fenster.png'))
-$sx = [double]$bmp.Width / $mons[0].Width; $px = $bmp.GetPixel([int](290 * $sx), [int](70 * $sx))
+$sx = [double]$bmp.Width / $mons[0].Width; $px = $bmp.GetPixel([int](290 * $sx), [int](270 * $sx))
 Info ("Farbe im Testfenster (erwartet etwa 0,120,215): " + $px.R + "," + $px.G + "," + $px.B)
 Check ([Math]::Abs($px.R - 0) -lt 40 -and [Math]::Abs($px.G - 120) -lt 40 -and [Math]::Abs($px.B - 215) -lt 40) 'Inhalt des Fernbilds stimmt (blaues Testfenster an der richtigen Stelle)'
 $bmp.Dispose()

@@ -4463,7 +4463,7 @@ public sealed class PesHost
                 return f;
             };
             string e1 = o.Start(speakerDevice);
-            if (e1 != null) { MediaError = e1; o = null; }
+            if (e1 != null) o = null;
             spk = o == null ? new PesAudioOut() : o;
             PesAudioIn m = new PesAudioIn();
             m.OnFrame = delegate (short[] f)
@@ -4479,8 +4479,11 @@ public sealed class PesHost
                 s.SendAudio(f);
             };
             string e2 = m.Start(micDevice);
-            if (e2 != null) { MediaError = (MediaError.Length > 0 ? MediaError + " / " : "") + e2; m = null; }
+            if (e2 != null) m = null;
             mic = m;
+            if (e1 != null && e2 != null) MediaError = "Kein Lautsprecher und kein Mikrofon gefunden - der Anruf laeuft ohne Ton.";
+            else if (e1 != null) MediaError = "Kein Lautsprecher gefunden - du hoerst den Partner nicht.";
+            else if (e2 != null) MediaError = "Kein Mikrofon gefunden - der Partner hoert dich nicht.";
         }
     }
 
@@ -4554,50 +4557,82 @@ public static class PesI18n
 {
     public static volatile string Lang = "de";
     private static readonly Dictionary<string, string> en = new Dictionary<string, string>(StringComparer.Ordinal);
-    private static readonly List<KeyValuePair<string, string>> prefixes = new List<KeyValuePair<string, string>>();
+    private static readonly List<KeyValuePair<string, string>> enPrefixes = new List<KeyValuePair<string, string>>();
+    // Die Meldungen des Kerns sind bewusst reines ASCII ("laeuft"); fuer die deutsche Anzeige gibt es hier die Schreibweise mit Umlauten
+    private static readonly Dictionary<string, string> de = new Dictionary<string, string>(StringComparer.Ordinal);
+    private static readonly List<KeyValuePair<string, string>> dePrefixes = new List<KeyValuePair<string, string>>();
     private static readonly List<KeyValuePair<WeakReference, string>> reg = new List<KeyValuePair<WeakReference, string>>();
     private static readonly HashSet<string> missing = new HashSet<string>();
 
-    // Zeilen "deutsch<TAB>english"; endet der deutsche Teil mit "*", gilt er als Anfang (Rest wird ebenfalls uebersetzt).
-    public static void Load(string dict)
+    // Zeilen "deutsch<TAB>anderer Text"; endet der deutsche Teil mit "*", gilt er als Anfang (der Rest wird ebenfalls nachgeschlagen).
+    private static void Fill(string dict, Dictionary<string, string> exact, List<KeyValuePair<string, string>> prefixes)
     {
-        en.Clear(); prefixes.Clear();
+        exact.Clear(); prefixes.Clear();
         if (dict == null) return;
         foreach (string raw in dict.Split('\n'))
         {
             string line = raw.TrimEnd('\r');
             int t = line.IndexOf('\t');
-            if (t <= 0) continue;
-            string de = line.Substring(0, t), e = line.Substring(t + 1);
-            if (de.EndsWith("*") && e.EndsWith("*")) prefixes.Add(new KeyValuePair<string, string>(de.Substring(0, de.Length - 1), e.Substring(0, e.Length - 1)));
-            else en[de] = e;
+            if (t <= 0 || line.StartsWith("#")) continue;
+            string k = line.Substring(0, t), v = line.Substring(t + 1);
+            if (k.EndsWith("*") && v.EndsWith("*")) prefixes.Add(new KeyValuePair<string, string>(k.Substring(0, k.Length - 1), v.Substring(0, v.Length - 1)));
+            else exact[k] = v;
         }
     }
 
-    public static string T(string de)
+    public static void Load(string dictEn, string dictDe)
     {
-        if (string.IsNullOrEmpty(de) || Lang != "en") return de;
-        string e;
-        if (en.TryGetValue(de, out e)) return e;
+        Fill(dictEn, en, enPrefixes);
+        Fill(dictDe, de, dePrefixes);
+    }
+
+    private static bool Find(string text, Dictionary<string, string> exact, List<KeyValuePair<string, string>> prefixes, out string result)
+    {
+        if (exact.TryGetValue(text, out result)) return true;
         foreach (KeyValuePair<string, string> p in prefixes)
-            if (de.StartsWith(p.Key, StringComparison.Ordinal)) return p.Value + T(de.Substring(p.Key.Length));
-        lock (missing) { if (missing.Count < 500) missing.Add(de); }
-        return de;
+        {
+            if (!text.StartsWith(p.Key, StringComparison.Ordinal)) continue;
+            string rest = text.Substring(p.Key.Length), r2;
+            result = p.Value + (Find(rest, exact, prefixes, out r2) ? r2 : rest);
+            return true;
+        }
+        result = text;
+        return false;
     }
 
-    public static string F(string de, params object[] args)
+    // Feste Texte der Oberflaeche (deutsch im Quelltext).
+    public static string T(string text)
     {
-        try { return string.Format(T(de), args); } catch { return T(de); }
+        if (string.IsNullOrEmpty(text) || Lang != "en") return text;
+        string r;
+        if (Find(text, en, enPrefixes, out r)) return r;
+        lock (missing) { if (missing.Count < 500) missing.Add(text); }
+        return text;
     }
 
-    // Fuer die Build-Pruefung: Texte, fuer die es (noch) keine Uebersetzung gab.
+    // Meldungen aus dem Kern oder vom System: uebersetzen, soweit bekannt; sonst unveraendert.
+    public static string Core(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        string r;
+        if (Lang == "en") { Find(text, en, enPrefixes, out r); return r; }
+        Find(text, de, dePrefixes, out r);
+        return r;
+    }
+
+    public static string F(string text, params object[] args)
+    {
+        try { return string.Format(T(text), args); } catch { return T(text); }
+    }
+
+    // Fuer die Build-Pruefung: feste Texte, fuer die es keine englische Fassung gab.
     public static string[] Missing() { lock (missing) { string[] a = new string[missing.Count]; missing.CopyTo(a); return a; } }
 
-    public static void Reg(object target, string de)
+    public static void Reg(object target, string text)
     {
         if (target == null) return;
-        lock (reg) { reg.Add(new KeyValuePair<WeakReference, string>(new WeakReference(target), de)); }
-        Set(target, T(de));
+        lock (reg) { reg.Add(new KeyValuePair<WeakReference, string>(new WeakReference(target), text)); }
+        Set(target, T(text));
     }
 
     private static void Set(object target, string text)
