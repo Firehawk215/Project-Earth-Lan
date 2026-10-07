@@ -1,0 +1,32 @@
+﻿2026-10-07 06:51:37 [INFO] Gestartet, Version 2026.10.07 (ps1)
+2026-10-07 06:51:39 [INFO] New invitation code created. Put it on the clipboard with "Copy" and send it to the customer.
+2026-10-07 06:51:39 [INFO] Connecting to the mediator 127.0.0.1:39690 ...
+2026-10-07 06:51:39 [P2P] 06:51:39  Status: Schluessel werden abgeleitet ...
+2026-10-07 06:51:41 [INFO] Session started.
+2026-10-07 06:51:41 [P2P] 06:51:41  Lokaler UDP-Port: 39692
+2026-10-07 06:51:41 [P2P] 06:51:41  Status: Verbinde mit Vermittlungsserver ...
+2026-10-07 06:51:41 [P2P] 06:51:41  Vermittlungsserver: 127.0.0.1:39690
+2026-10-07 06:51:41 [P2P] 06:51:41  Virtuelle IP zugewiesen: 10.77.168.248/16 (oeffentlich sichtbar als 127.0.0.1:39692)
+2026-10-07 06:51:41 [P2P] 06:51:41  Status: Verbunden
+2026-10-07 06:51:42 [INFO] Hintergrundaufgabe 'Firewall-Regel Project Earth Support (UDP 39692)': angelegt
+2026-10-07 06:51:43 [P2P] 06:51:43  Mitspieler in der Lobby: Testkunde (10.77.29.245) - starte Hole Punching an 127.0.0.1:39693
+2026-10-07 06:51:43 [P2P] 06:51:43  Direktverbindung (Hole Punching) mit Testkunde ueber 127.0.0.1:39693
+2026-10-07 06:51:43 [INFO] Testkunde is connected (customer, Windows).
+2026-10-07 06:51:45 [INFO] Calling ...
+2026-10-07 06:51:45 [INFO] Call connected.
+2026-10-07 06:51:45 [INFO] No speaker and no microphone found - the call runs without sound.
+2026-10-07 06:51:48 [INFO] Control requested - the customer has to agree.
+2026-10-07 06:51:49 [INFO] The customer is sharing the screen - control allowed.
+2026-10-07 06:51:50 [INFO] Screenshot saved: C:\Users\runneradmin\Downloads\Project Earth Support\Bildschirmfoto_20261007_065150.png
+2026-10-07 06:51:51 [INFO] The customer is no longer sharing the screen.
+2026-10-07 06:51:53 [INFO] Call ended.
+2026-10-07 06:51:53 [INFO] Request declined.
+2026-10-07 06:51:53 [INFO] Request declined.
+2026-10-07 06:51:53 [INFO] Missed call.
+2026-10-07 06:51:53 [INFO] File sent and verified: a.txt
+2026-10-07 06:51:53 [INFO] File transfer aborted: a.txt (cancelled)
+2026-10-07 06:51:53 [INFO] Testkunde is no longer connected. Connection to the partner lost.
+2026-10-07 06:51:54 [INFO] Disconnected.
+2026-10-07 06:51:57 [RV] 2026-10-07 06:51:57  Vermittlungsserver laeuft auf UDP-Port 39691
+2026-10-07 06:51:58 [INFO] Hintergrundaufgabe 'Firewall-Regel Project Earth Support Vermittler (UDP 39691)': angelegt
+2026-10-07 06:51:58 [INFO] Beendet.

@@ -1,0 +1,37 @@
+C#-Block kompiliert in 517 ms (PowerShell 5.1.26100.33438, 64 Bit)
+  OK   Deutsch bleibt unveraendert
+  OK   Englisch: Wort, Anfang und Platzhalter
+  OK   Umschalten beschriftet registrierte Controls neu
+  OK   Kern-Meldungen: deutsche Schreibweise mit Umlauten
+  ..   Bildschirme: 1024x768@0,0
+  ..   Kameras:  | Mikrofone:  | Lautsprecher: 
+  OK   INPUT-Struktur hat die richtige Groesse
+  OK   Beide Seiten gestartet (Verbinden im Hintergrund)
+  OK   Kopplung Helfer <-> Kunde
+  OK   Helfer fordert Bildschirm mit Steuerung an
+  OK   Anfrage kommt beim Kunden an
+  OK   Freigabe mit Steuerung gemeldet
+  OK   Bildschirmbild kommt beim Helfer an (1024x768)
+  ..   Rechtecke: 6, Byte: 161198, Bilder/s: 2, kbit/s: 1268
+  ..   Fernbild gespeichert: 1024x768, verschiedene Farben in der Stichprobe: 685
+  OK   Fernbild hat die gemeldete Groesse
+  OK   Geaenderter Bereich wird nachgeliefert
+  ..   Farbe im Testfenster (erwartet etwa 0,120,215): 0,119,214
+  OK   Inhalt des Fernbilds stimmt (blaues Testfenster an der richtigen Stelle)
+  ..   Zeiger vorher 512,384 nachher 256,192; Bildschirm 1024x768
+  OK   Zeiger steht nach InputMove an der richtigen Stelle
+  ..   Text im Testfeld: 'Hallo PESa'
+  OK   Mausklick, Text und Taste kommen im Fenster des Kunden an
+  OK   Steuerung entzogen gemeldet
+  OK   Ohne Erlaubnis wird nichts mehr ausgefuehrt
+  OK   Freigabe beendet, Aufnahme gestoppt
+  OK   Anruf aktiv
+  ..   Ton Helfer: 'Kein Lautsprecher und kein Mikrofon gefunden - der Anruf laeuft ohne Ton.'  Ton Kunde: 'Kein Lautsprecher und kein Mikrofon gefunden - der Anruf laeuft ohne Ton.'
+  OK   Ton gestartet (Fehlermeldung statt Absturz, falls kein Geraet da ist)
+  ..   Kamera: laeuft=False Fehler='Keine Kamera gefunden.'
+  OK   Kamera: Bild oder verstaendliche Fehlermeldung (kein Absturz)
+  OK   Videobild wird uebertragen
+  ..   Farbe im Videopanel (erwartet dunkelgruen 0,100,0): 0,100,1
+  OK   Videopanel zeichnet das empfangene Bild (gedreht)
+  OK   Trennen wird beim Helfer erkannt
+ERGEBNIS: alle Pruefungen bestanden
