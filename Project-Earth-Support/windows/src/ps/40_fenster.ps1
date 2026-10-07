@@ -52,7 +52,7 @@ function Show-PesOptionsWindow {
     foreach ($n in [PesCamera]::Devices()) { [void]$o.Cam.Items.Add($n) }
     $o.Cam.SelectedIndex = [Math]::Max(0, $o.Cam.Items.IndexOf([string]$s.Camera)); $y += 32
     $o.Flip = New-PesCheck -Text 'Kamerabild steht auf dem Kopf: umdrehen' -X 16 -Y $y -W 560 -Parent $f; $o.Flip.Checked = [bool]$s.CameraFlip; $y += 26
-    $o.Echo = New-PesCheck -Text 'Echo-Sperre: Mikrofon stumm, solange der Partner spricht (ohne Kopfhörer empfohlen)' -X 16 -Y $y -W 570 -Parent $f; $o.Echo.Checked = [bool]$s.EchoGate; $y += 34
+    $o.Echo = New-PesCheck -Text 'Echo-Sperre: Mikrofon stumm, solange der Partner spricht (für Lautsprecher)' -X 16 -Y $y -W 570 -Parent $f; $o.Echo.Checked = [bool]$s.EchoGate; $y += 34
 
     [void](New-PesLabel -Text 'Eigener Mini-Vermittler (nur für Helfer)' -X 16 -Y $y -W 400 -H 22 -Kind 'head' -Parent $f); $y += 28
     [void](New-PesLabel -Text 'UDP-Port (Standard 9890)' -X 16 -Y ($y + 3) -W 170 -Parent $f)

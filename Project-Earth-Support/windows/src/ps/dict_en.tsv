@@ -74,7 +74,7 @@ Die Vermittler-Adresse im Einladungscode ist ungültig.	The mediator address in 
 Die öffentliche Adresse (DynDNS-Name) wird im Fenster des Vermittlers eingetragen - je Port getrennt.	The public address (DynDNS name) is entered in the mediator window - separately for each port.
 Die öffentliche Adresse ist ungültig (nur Name oder IP, ohne Port).	The public address is invalid (name or IP only, without port).
 Diese Adresse trägt der Helfer als "Vermittler-Adresse" ein:	The helper enters this address as "Mediator address":
-Echo-Sperre: Mikrofon stumm, solange der Partner spricht (ohne Kopfhörer empfohlen)	Echo lock: microphone muted while the partner is speaking (recommended without headphones)
+Echo-Sperre: Mikrofon stumm, solange der Partner spricht (für Lautsprecher)	Echo lock: microphone muted while the partner speaks (for speakers)
 Eigener Mini-Vermittler (nur für Helfer)	Own mini mediator (helpers only)
 Einfügen	Paste
 Eingehender Anruf	Incoming call

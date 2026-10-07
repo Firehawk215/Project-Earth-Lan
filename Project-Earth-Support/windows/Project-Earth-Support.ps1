@@ -4463,8 +4463,10 @@ public class PesVideoPanel : Control
     private long lastFrameTick;
     private volatile bool dirty;
     private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-    public string Placeholder = "";
-    public string Caption = "";
+    private string placeholder = "", caption = "";
+    // Aenderungen der Texte loesen ein Neuzeichnen aus (ueber den Zeitgeber im Oberflaechen-Thread)
+    public string Placeholder { get { return placeholder; } set { string v = value ?? ""; if (v != placeholder) { placeholder = v; dirty = true; } } }
+    public string Caption { get { return caption; } set { string v = value ?? ""; if (v != caption) { caption = v; dirty = true; } } }
     public bool Mirror;
 
     public PesVideoPanel()
@@ -4574,8 +4576,10 @@ public class PesViewPanel : Control
     private Thread worker;
     private volatile bool alive = true;
     public PesSession Session;
-    public volatile bool ControlEnabled;
-    public string Placeholder = "";
+    private volatile bool controlEnabled;
+    private string placeholder = "";
+    public bool ControlEnabled { get { return controlEnabled; } set { if (value != controlEnabled) { controlEnabled = value; dirty = true; } } }
+    public string Placeholder { get { return placeholder; } set { string v = value ?? ""; if (v != placeholder) { placeholder = v; dirty = true; } } }
     public long Rects, Bytes;
 
     public PesViewPanel()
@@ -5176,7 +5180,7 @@ Die Vermittler-Adresse im Einladungscode ist ungültig.	The mediator address in 
 Die öffentliche Adresse (DynDNS-Name) wird im Fenster des Vermittlers eingetragen - je Port getrennt.	The public address (DynDNS name) is entered in the mediator window - separately for each port.
 Die öffentliche Adresse ist ungültig (nur Name oder IP, ohne Port).	The public address is invalid (name or IP only, without port).
 Diese Adresse trägt der Helfer als "Vermittler-Adresse" ein:	The helper enters this address as "Mediator address":
-Echo-Sperre: Mikrofon stumm, solange der Partner spricht (ohne Kopfhörer empfohlen)	Echo lock: microphone muted while the partner is speaking (recommended without headphones)
+Echo-Sperre: Mikrofon stumm, solange der Partner spricht (für Lautsprecher)	Echo lock: microphone muted while the partner speaks (for speakers)
 Eigener Mini-Vermittler (nur für Helfer)	Own mini mediator (helpers only)
 Einfügen	Paste
 Eingehender Anruf	Incoming call
@@ -5421,7 +5425,7 @@ function New-PesButton {
     $b.Font = $script:FontUi
     $b.UseVisualStyleBackColor = $false
     Set-PesButtonKind -Button $b -Kind $Kind
-    [PesI18n]::Reg($b, $Text)
+    if ($Text) { [PesI18n]::Reg($b, $Text) }
     if ($Parent) { $Parent.Controls.Add($b) }
     return $b
 }
@@ -5545,7 +5549,9 @@ function Show-PesAsk {
         $kind = 'normal'
         if ($i -eq $Accent) { $kind = 'accent' }
         if ($i -eq $Danger) { $kind = 'danger' }
-        $b = New-PesButton -Text $Buttons[$i] -X $x -Y 140 -W $bw -H 34 -Kind $kind -Parent $f
+        # Die Beschriftungen kommen schon in der richtigen Sprache herein
+        $b = New-PesButton -Text '' -X $x -Y 140 -W $bw -H 34 -Kind $kind -Parent $f
+        $b.Text = $Buttons[$i]
         $b.Tag = $i
         $b.Add_Click({ $this.FindForm().Tag = [int]$this.Tag; $this.FindForm().Close() })
         $x += $bw + 8
@@ -5756,8 +5762,12 @@ function Update-PesTexts {
 
 function New-PesMainWindow {
     $u = $script:PesUi
-    $f = New-PesForm -Title ($script:PesTitle + '  ' + $script:PesVersion) -W 1260 -H 800 -Sizable $true
-    $f.MinimumSize = New-Object System.Drawing.Size(1040, 700)
+    # Auf kleinen Bildschirmen passt sich das Fenster an die verfügbare Fläche an
+    $wa = [System.Windows.Forms.Screen]::PrimaryScreen.WorkingArea
+    $fw = [Math]::Min(1260, $wa.Width - 24)
+    $fh = [Math]::Min(800, $wa.Height - 48)
+    $f = New-PesForm -Title ($script:PesTitle + '  ' + $script:PesVersion) -W $fw -H $fh -Sizable $true
+    $f.MinimumSize = New-Object System.Drawing.Size(([Math]::Min(1040, $fw)), ([Math]::Min(700, $fh)))
     $f.KeyPreview = $true
     $u.Form = $f
 
@@ -5796,7 +5806,7 @@ function New-PesMainWindow {
     $u.BtnOptions = New-PesButton -Text 'Optionen' -X 12 -Y 720 -W 76 -H 30 -Parent $side
     $u.BtnRv = New-PesButton -Text 'Vermittler' -X 92 -Y 720 -W 76 -H 30 -Parent $side
     $u.BtnHelp = New-PesButton -Text 'Hilfe' -X 172 -Y 720 -W 76 -H 30 -Parent $side
-    $u.BtnLang = New-PesButton -Text 'English' -X 252 -Y 720 -W 76 -H 30 -Parent $side
+    $u.BtnLang = New-PesButton -Text '' -X 252 -Y 720 -W 76 -H 30 -Parent $side
 
     # ---- Hauptbereich (links): Kopfzeile, oben Video, unten Fernwartung ----
     $main = New-PesPanel
@@ -6556,7 +6566,7 @@ function Show-PesOptionsWindow {
     foreach ($n in [PesCamera]::Devices()) { [void]$o.Cam.Items.Add($n) }
     $o.Cam.SelectedIndex = [Math]::Max(0, $o.Cam.Items.IndexOf([string]$s.Camera)); $y += 32
     $o.Flip = New-PesCheck -Text 'Kamerabild steht auf dem Kopf: umdrehen' -X 16 -Y $y -W 560 -Parent $f; $o.Flip.Checked = [bool]$s.CameraFlip; $y += 26
-    $o.Echo = New-PesCheck -Text 'Echo-Sperre: Mikrofon stumm, solange der Partner spricht (ohne Kopfhörer empfohlen)' -X 16 -Y $y -W 570 -Parent $f; $o.Echo.Checked = [bool]$s.EchoGate; $y += 34
+    $o.Echo = New-PesCheck -Text 'Echo-Sperre: Mikrofon stumm, solange der Partner spricht (für Lautsprecher)' -X 16 -Y $y -W 570 -Parent $f; $o.Echo.Checked = [bool]$s.EchoGate; $y += 34
 
     [void](New-PesLabel -Text 'Eigener Mini-Vermittler (nur für Helfer)' -X 16 -Y $y -W 400 -H 22 -Kind 'head' -Parent $f); $y += 28
     [void](New-PesLabel -Text 'UDP-Port (Standard 9890)' -X 16 -Y ($y + 3) -W 170 -Parent $f)

@@ -4038,8 +4038,10 @@ public class PesVideoPanel : Control
     private long lastFrameTick;
     private volatile bool dirty;
     private readonly System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer();
-    public string Placeholder = "";
-    public string Caption = "";
+    private string placeholder = "", caption = "";
+    // Aenderungen der Texte loesen ein Neuzeichnen aus (ueber den Zeitgeber im Oberflaechen-Thread)
+    public string Placeholder { get { return placeholder; } set { string v = value ?? ""; if (v != placeholder) { placeholder = v; dirty = true; } } }
+    public string Caption { get { return caption; } set { string v = value ?? ""; if (v != caption) { caption = v; dirty = true; } } }
     public bool Mirror;
 
     public PesVideoPanel()
@@ -4149,8 +4151,10 @@ public class PesViewPanel : Control
     private Thread worker;
     private volatile bool alive = true;
     public PesSession Session;
-    public volatile bool ControlEnabled;
-    public string Placeholder = "";
+    private volatile bool controlEnabled;
+    private string placeholder = "";
+    public bool ControlEnabled { get { return controlEnabled; } set { if (value != controlEnabled) { controlEnabled = value; dirty = true; } } }
+    public string Placeholder { get { return placeholder; } set { string v = value ?? ""; if (v != placeholder) { placeholder = v; dirty = true; } } }
     public long Rects, Bytes;
 
     public PesViewPanel()
