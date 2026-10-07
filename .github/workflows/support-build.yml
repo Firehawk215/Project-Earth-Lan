@@ -1,0 +1,28 @@
+name: Project Earth Support - Bau und Pruefung
+
+on:
+  push:
+    branches: ['claude/project-earth-support']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows (PowerShell 5.1, .NET Framework)
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kern-Selbsttest (ohne Verlust)
+        shell: powershell
+        run: |
+          $PSVersionTable.PSVersion.ToString()
+          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+      - name: Kern-Selbsttest (10 % Paketverlust)
+        shell: powershell
+        run: |
+          & .\Project-Earth-Support\windows\test\core_test.ps1 -Src .\Project-Earth-Support\windows\src -LossPercent 10
+          if ($LASTEXITCODE -ne 0) { exit 1 }
